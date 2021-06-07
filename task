@@ -1,0 +1,32 @@
+#!/bin/bash
+# braindump
+# (c) abstractsun
+# License: GPL version 3 or, at your option, any later version
+
+mkdir -p tasks;
+
+if [ -z $1 ]; then
+    vim tasks;
+    exit;
+fi;
+
+TASKNAME=$1
+
+CDIR="$(pwd)"
+mkdir -p tasks
+mkdir -p tasks/archived
+cd tasks
+#TODO: This line doesn't work as expected
+#MATCHING="$(printf "$(find . | grep -is $TASKNAME | grep --exclude "swp$" | grep -vs archived)")"
+MATCHING="$(printf "$(find . | grep -is $TASKNAME | grep -vE "~$" | grep -vE "\.swp$" | grep -vs archived)")"
+cd "$CDIR"
+
+if [ -z "$MATCHING" ]; then
+    vim "tasks/${TASKNAME}_$(date +%Y-%m-%d).txt"
+elif [[ "$TASKNAME" == "todo" ]]; then
+    vim "tasks/todo.txt"
+else
+    vim "tasks/${MATCHING[0]}" -s .scripts/vim_task_start
+fi;
+
+cd $CDIR

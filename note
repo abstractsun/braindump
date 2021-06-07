@@ -1,0 +1,17 @@
+#!/bin/bash
+# braindump
+# (c) abstractsun
+# License: GPL version 3 or, at your option, any later version
+
+mkdir -p notes
+CONTEXT_DESC=""
+DATE_DESC="_$(date +%Y-%m-%d)"
+NOTEFILE="notes/note${CONTEXT_DESC}${DATE_DESC}.txt";
+
+
+if [ -n "$1" ]; then
+    echo "$1" >> "$NOTEFILE"
+    echo "Added note: \"$(tail -n 1 "$NOTEFILE")\""
+else
+    vim + "$NOTEFILE"
+fi

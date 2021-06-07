@@ -1,0 +1,3 @@
+G
+:read !.scripts/logdate.sh
+$A

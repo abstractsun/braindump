@@ -1,0 +1,25 @@
+#!/bin/bash
+# braindump
+# (c) abstractsun
+# License: GPL version 3 or, at your option, any later version
+
+mkdir -p logs;
+
+LOGNAME="$1"
+if [ -z $1 ]; then
+    LOGNAME="log"
+fi;
+
+CDIR="$(pwd)"
+mkdir -p logs
+cd logs
+MATCHING="$(printf "$(find . | grep -is $LOGNAME)")"
+cd "$CDIR"
+
+if [ -z "$MATCHING" ]; then
+    vim "logs/${LOGNAME}_$(date +%Y-%m-%d).txt" -s .scripts/vim_log_start
+else
+    vim "logs/${MATCHING[0]}" -s .scripts/vim_log_start
+fi;
+
+cd $CDIR

@@ -1,0 +1,6 @@
+#!/bin/bash
+# braindump
+# (c) abstractsun
+# License: GPL version 3 or, at your option, any later version
+
+grep -irns "\[PIN\]" ideas notes tasks | less

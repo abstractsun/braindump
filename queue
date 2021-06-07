@@ -1,0 +1,14 @@
+#!/bin/bash
+# braindump
+# (c) abstractsun
+# License: GPL version 3 or, at your option, any later version
+
+mkdir -p .braindump
+QUEUEFILE=".braindump/queue.txt"
+
+if [ -n "$1" ]; then
+    echo "$1" >> "$QUEUEFILE"
+    echo "Added to queue: \"$(tail -n 1 "$QUEUEFILE")\""
+else
+    vim + "$QUEUEFILE"
+fi

@@ -1,0 +1,112 @@
+#!/bin/bash
+# braindump
+# (c) abstractsun
+# License: GPL version 3 or, at your option, any later version
+
+IFS=$'\n'
+
+ENABLE_TRIAGE_CACHE=true
+if [[ "$1" == "nocache" ]]; then
+    echo "nocache"
+    shift
+    ENABLE_TRIAGE_CACHE=false
+fi
+if [[ "$1" == "cache" ]]; then
+    echo "cache"
+    shift
+    ENABLE_TRIAGE_CACHE=true
+fi
+CLEAR_TRIAGE_CACHE=false
+if [[ "$1" == "clearcache" ]]; then
+    shift
+    CLEAR_TRIAGE_CACHE=true
+fi
+OLDEST_NEEDING_TRIAGE_FILE=".braindump/oldest_needing_triage_v1"
+if $ENABLE_TRIAGE_CACHE; then
+    mkdir -p ".braindump"
+    if $CLEAR_TRIAGE_CACHE; then
+        echo "Clearing cache"
+        rm -f "$OLDEST_NEEDING_TRIAGE_FILE"
+    fi
+    touch "$OLDEST_NEEDING_TRIAGE_FILE"
+    OLDEST_NEEDING_TRIAGE_TIMESTAMP="$(cat $OLDEST_NEEDING_TRIAGE_FILE)"
+fi
+
+echo "Checking TODO list"
+./todo
+
+echo "Getting files"
+if $ENABLE_TRIAGE_CACHE; then
+    if [[ ! -f "$OLDEST_NEEDING_TRIAGE_FILE" ]]; then
+        echo "triage needs to build a cache. This may take a while."
+    fi
+fi
+if [ -n "$1" ]; then
+    ALL="$@"
+fi;
+if [ -z "$ALL" ]; then
+    if $ENABLE_TRIAGE_CACHE; then
+        if [[ -n "$OLDEST_NEEDING_TRIAGE_TIMESTAMP" ]]; then
+            OLDEST_NEEDING_TRIAGE_SECONDS="`date -d "$OLDEST_NEEDING_TRIAGE_TIMESTAMP" +%s`"
+            BEFORE_OLDEST_NEEDING_TRIAGE_SECONDS=$(( $OLDEST_NEEDING_TRIAGE_SECONDS - 86400 ))
+            BEFORE_OLDEST_NEEDING_TRIAGE="`date --date="@$BEFORE_OLDEST_NEEDING_TRIAGE_SECONDS"`"
+            TIME_ARG="-newermt"
+            TIME_ARG_2="$BEFORE_OLDEST_NEEDING_TRIAGE"
+        fi
+    fi
+
+    ALL="";
+    if [ -d ideas ]; then
+        ALL+="$(printf "\n$(find $PWD/ideas/* -type f $TIME_ARG $TIME_ARG_2 | grep -vE "~$")")"
+    fi;
+    if [ -d notes ]; then
+        ALL+="$(printf "\n$(find $PWD/notes/* -type f $TIME_ARG $TIME_ARG_2 | grep -vE "~$")")"
+    fi;
+fi;
+
+echo "Finding files needing triage"
+NEEDING_TRIAGE=""
+ALL_CHECKED_FILES_COUNT=0
+NEED_TRIAGE_COUNT=0
+for file in $ALL; do
+    ALL_CHECKED_FILES_COUNT=$(($ALL_CHECKED_FILES_COUNT + 1))
+    if [ -z "$(tail -n 1 $file | grep "^\[TRIAGE\]\s*$")" ]; then
+        NEEDING_TRIAGE+="$(printf "\n${file}")"
+	NEED_TRIAGE_COUNT=$(($NEED_TRIAGE_COUNT + 1))
+        if $ENABLE_TRIAGE_CACHE; then
+            THIS_NEEDING_TRIAGE_TIMESTAMP="$(date -d "$(stat $file -c %y)")"
+            if [[ -z "$NEW_OLDEST_NEEDING_TRIAGE_TIMESTAMP" ]]; then
+                OLDEST_NEEDING_TRIAGE="$file"
+                NEW_OLDEST_NEEDING_TRIAGE_TIMESTAMP=$THIS_NEEDING_TRIAGE_TIMESTAMP
+                NEW_OLDEST_NEEDING_TRIAGE_SECONDS="`date -d "$NEW_OLDEST_NEEDING_TRIAGE_TIMESTAMP" +%s`"
+            else
+                THIS_NEEDING_TRIAGE_SECONDS="`date -d "$THIS_NEEDING_TRIAGE_TIMESTAMP" +%s`"
+                if [[ $THIS_NEEDING_TRIAGE_SECONDS < $NEW_OLDEST_NEEDING_TRIAGE_SECONDS ]]; then
+                    OLDEST_NEEDING_TRIAGE="$file"
+                    NEW_OLDEST_NEEDING_TRIAGE_TIMESTAMP=$THIS_NEEDING_TRIAGE_TIMESTAMP
+                    NEW_OLDEST_NEEDING_TRIAGE_SECONDS="`date -d "$NEW_OLDEST_NEEDING_TRIAGE_TIMESTAMP" +%s`"
+                fi
+            fi
+        fi
+    fi
+done
+if $ENABLE_TRIAGE_CACHE; then
+    echo "$NEW_OLDEST_NEEDING_TRIAGE_TIMESTAMP" > $OLDEST_NEEDING_TRIAGE_FILE
+fi
+
+if [[ $NEED_TRIAGE_COUNT > 0 ]]; then
+    echo "Files checked: $ALL_CHECKED_FILES_COUNT"
+    echo "Files needing triage: $NEED_TRIAGE_COUNT";
+    if $ENABLE_TRIAGE_CACHE; then
+        echo "triage thinks the stalest file needing triage is $OLDEST_NEEDING_TRIAGE"
+        echo "It was last modified on: $NEW_OLDEST_NEEDING_TRIAGE_TIMESTAMP"
+    fi
+fi;
+
+for file in $NEEDING_TRIAGE; do
+    echo "Opening file for triage: (Ctrl+C to cancel)";
+    echo "$file";
+    sleep 4;
+    vim "$file" -s .scripts/vim_triage_start;
+done
+

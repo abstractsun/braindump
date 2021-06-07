@@ -1,0 +1,16 @@
+#!/bin/bash
+# braindump
+# (c) abstractsun
+# License: GPL version 3 or, at your option, any later version
+
+mkdir -p tasks
+# In the future, take a look at "$@" and bash for loops
+if [ -n "$1" ]; then
+    export RND=$RANDOM &&
+    touch tasks/todo.txt &&
+    echo "$1" | cat - tasks/todo.txt > /tmp/braindump_todo_"$RND".txt &&
+    mv /tmp/braindump_todo_"$RND".txt tasks/todo.txt &&
+    echo "Added TODO: \"$(cat tasks/todo.txt | grep . -m 1)\""
+else
+    vim "tasks/todo.txt";
+fi

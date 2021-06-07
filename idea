@@ -1,0 +1,17 @@
+#!/bin/bash
+# braindump
+# (c) abstractsun
+# License: GPL version 3 or, at your option, any later version
+
+mkdir -p ideas
+CONTEXT_DESC=""
+DATE_DESC="_$(date +%Y-%m-%d)"
+IDEAFILE="ideas/idea${CONTEXT_DESC}${DATE_DESC}.txt";
+
+
+if [ -n "$1" ]; then
+    echo "$1" >> "$IDEAFILE"
+    echo "Added idea: \"$(tail -n 1 "$IDEAFILE")\""
+else
+    vim + "$IDEAFILE"
+fi

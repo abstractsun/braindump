@@ -1,0 +1,25 @@
+#!/bin/bash
+# braindump
+# (c) abstractsun
+# License: GPL version 3 or, at your option, any later version
+
+if [ -z "`which qrencode`" ]; then
+    echo "Error: qrencode not installed"
+    exit;
+fi
+
+if [ -z "$1" ]; then
+    echo "Nothing to qrify"
+    exit;
+fi
+
+PNG=/tmp/braindump_qr_"$RANDOM".png
+qrencode "$1" -o "$PNG"
+
+if [ -n "`which xdg-open`" ]; then
+    xdg-open "$PNG"
+else
+    open "$PNG"
+fi
+
+printf "$1\n"
