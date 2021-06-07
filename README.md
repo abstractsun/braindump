@@ -56,3 +56,5 @@ I don't use braindump for everything. Here are a few other tools I've found usef
 - To be honest, I still use instant messaging on occasion, or a graphical text editor. It's more convenient in certain situations.
 
 A grad student I used to work with once said to me, "Keep a Gedankenlog." I still think about that.
+
+Another adage: In the absence of other factors, if you have a choice between storing data in a flat data structure vs a hierarchical one, it is better to go with the flat data structure. Why? Because you can't anticipate how the data will be used.
