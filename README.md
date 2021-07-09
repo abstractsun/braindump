@@ -22,13 +22,11 @@ All commands currently assume you stay in the same folder.
     - Variant: `./idea "IDEA_MSG"`
 - `./todo` - Edits/prepends a todo
     - Variant: `./todo "TODO_MSG"`
-- `./triage` - Assists in reviewing notes, ideas, and the todo file
-    - First, the todo file is opened
-    - Then, files in the notes/ideas folders needing review are opened
-        - If a line contains `[TRIAGE]`, jump to that line
-        - Files with `[TRIAGE]` as the last line are ignored. They are considered fully reviewed.
+- `./triage` - Assists in reviewing the todo file, notes, and ideas
+    - You can write `[TRIAGE]` in a note/idea file to mark where you left off
+    - Note/idea files with `[TRIAGE]` as the last line are ignored. They are considered fully reviewed.
 - `./task TASKNAME` - Opens the named task
-    - If a line contains `[START]`, jump to that line
+    - You can write `[START]` in a task file to mark where you left off
     - Variant: `./task` - Opens the tasks folder
 - `./log LOGNAME` - Opens the named log, appends a timestamp, and enters insert mode after the timestamp
 - `./pin` - Displays lines in notes/ideas/tasks containing `[PIN]`
