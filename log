@@ -6,9 +6,13 @@
 mkdir -p logs;
 
 LOGNAME="$1"
-if [ -z $1 ]; then
+if [[ -z "$1" || "$1" == "?" ]]; then
     LOGNAME="log"
-fi;
+fi
+if [[ "$1" != "?" ]]; then
+    shift
+fi
+QM="$1"
 
 CDIR="$(pwd)"
 mkdir -p logs
@@ -17,9 +21,13 @@ MATCHING="$(printf "$(find . | grep -is $LOGNAME)")"
 cd "$CDIR"
 
 if [ -z "$MATCHING" ]; then
-    vim "logs/${LOGNAME}_$(date +%Y-%m-%d).txt" -s .scripts/vim_log_start
+    LOGFILE="logs/${LOGNAME}_$(date +%Y-%m-%d).txt"
 else
-    vim "logs/${MATCHING[0]}" -s .scripts/vim_log_start
+    LOGFILE="logs/${MATCHING[0]}"
 fi;
 
-cd $CDIR
+if [[ "$QM" == "?" ]]; then
+    echo "$LOGFILE"
+else
+    vim "$LOGFILE" -s .scripts/vim_log_start
+fi

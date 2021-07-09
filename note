@@ -9,7 +9,9 @@ DATE_DESC="_$(date +%Y-%m-%d)"
 NOTEFILE="notes/note${CONTEXT_DESC}${DATE_DESC}.txt";
 
 
-if [ -n "$1" ]; then
+if [[ "$1" == "?" && -z "$2" ]]; then
+    echo "$NOTEFILE"
+elif [ -n "$1" ]; then
     echo "$1" >> "$NOTEFILE"
     echo "Added note: \"$(tail -n 1 "$NOTEFILE")\""
 else

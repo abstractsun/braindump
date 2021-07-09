@@ -5,28 +5,49 @@
 
 mkdir -p tasks;
 
-if [ -z $1 ]; then
-    vim tasks;
-    exit;
-fi;
-
-TASKNAME=$1
+if [[ -z "$1" ]]; then
+    TASKNAME=""
+elif [[ "$1" == "?" ]]; then
+    TASKNAME=""
+    QM="?"
+else
+    TASKNAME=$1
+    shift
+    if [[ "$1" == "?" ]]; then
+        QM="?"
+    fi
+fi
 
 CDIR="$(pwd)"
 mkdir -p tasks
 mkdir -p tasks/archived
-cd tasks
-#TODO: This line doesn't work as expected
-#MATCHING="$(printf "$(find . | grep -is $TASKNAME | grep --exclude "swp$" | grep -vs archived)")"
-MATCHING="$(printf "$(find . | grep -is $TASKNAME | grep -vE "~$" | grep -vE "\.swp$" | grep -vs archived)")"
-cd "$CDIR"
 
-if [ -z "$MATCHING" ]; then
-    vim "tasks/${TASKNAME}_$(date +%Y-%m-%d).txt"
+if [[ -n "$TASKNAME" ]]; then
+    cd tasks
+    MATCHING="$(printf "$(find . | grep -is $TASKNAME | grep -vE "~$" | grep -vE "\.swp$" | grep -vs archived)")"
+    cd "$CDIR"
+fi
+
+
+LOAD_SCRIPT=false
+if [[ -z "$TASKNAME" ]]; then
+    TASKFILE="tasks"
+elif [ -z "$MATCHING" ]; then
+    TASKFILE="tasks/${TASKNAME}_$(date +%Y-%m-%d).txt"
+    LOAD_SCRIPT=true
 elif [[ "$TASKNAME" == "todo" ]]; then
-    vim "tasks/todo.txt"
+    TASKFILE="tasks/todo.txt"
 else
-    vim "tasks/${MATCHING[0]}" -s .scripts/vim_task_start
+    TASKFILE="tasks/${MATCHING[0]}"
+    LOAD_SCRIPT=true
 fi;
+
+if [[ "$QM" == "?" ]]; then
+    echo "$TASKFILE"
+elif "$LOAD_SCRIPT"; then
+    vim "$TASKFILE" -s .scripts/vim_task_start
+else
+    vim "$TASKFILE"
+fi
 
 cd $CDIR

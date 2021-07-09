@@ -9,7 +9,9 @@ DATE_DESC="_$(date +%Y-%m-%d)"
 IDEAFILE="ideas/idea${CONTEXT_DESC}${DATE_DESC}.txt";
 
 
-if [ -n "$1" ]; then
+if [[ "$1" == "?" && -z "$2" ]]; then
+    echo "$IDEAFILE"
+elif [ -n "$1" ]; then
     echo "$1" >> "$IDEAFILE"
     echo "Added idea: \"$(tail -n 1 "$IDEAFILE")\""
 else

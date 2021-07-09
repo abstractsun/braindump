@@ -6,6 +6,11 @@
 mkdir -p .braindump
 QUEUEFILE=".braindump/queue.txt"
 
+if [[ "$1" == "?" && -z "$2" ]]; then
+    echo "$QUEUEFILE"
+    exit
+fi
+
 if [ -n "$1" ]; then
     echo "$1" >> "$QUEUEFILE"
     echo "Added to queue: \"$(tail -n 1 "$QUEUEFILE")\""

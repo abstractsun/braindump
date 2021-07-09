@@ -4,4 +4,9 @@
 # License: GPL version 3 or, at your option, any later version
 
 mkdir -p .braindump
-vim ".braindump/scratch.txt";
+SCRATCHFILE=".braindump/scratch.txt"
+if [[ "$1" == "?" ]]; then
+    echo "$SCRATCHFILE"
+    exit
+fi
+vim "$SCRATCHFILE";

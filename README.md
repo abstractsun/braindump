@@ -43,6 +43,12 @@ All commands currently assume you stay in the same folder.
 
 - Files in the `tasks/archived` and `logs/archived` subdirectories are ignored, allowing the creation of a new task/log files with the same names
 - When opening a task file, `:loadview` is invoked to load the existing vim view if it exists. This is useful when the view contains folded lines
+- Adding "?" to the end of some commands which would otherwise open a file will instead print the name of the file
+    - This works for `./note`, `./idea`, `./todo`, `./task [TASKNAME]`, `./log [LOGNAME]`, `./queue`, and `./scratch`
+    - This can be used in vim to open another braindump file in a separate buffer without using termcap, for example:
+        ```
+        :split `./note ?`
+        ```
 
 ## License
 
