@@ -10,11 +10,12 @@ TODOFILE="tasks/todo.txt"
 if [[ "$1" == "?" && -z "$2" ]]; then
     echo "$TODOFILE"
 elif [ -n "$1" ]; then
-    export RND=$RANDOM &&
-    touch "$TODOFILE" &&
-    echo "$1" | cat - "$TODOFILE" > /tmp/braindump_todo_"$RND".txt &&
-    mv /tmp/braindump_todo_"$RND".txt "$TODOFILE" &&
-    echo "Added TODO: \"$(cat "$TODOFILE" | grep . -m 1)\""
+    if [[ ! -f "$TODOFILE" ]]; then
+        touch "$TODOFILE"
+    fi
+    NEWTODOS="`echo "$1" | cat - "$TODOFILE"`"
+    printf "$NEWTODOS" > $TODOFILE &&
+    echo "Added TODO: \"$(head -n 1 "$TODOFILE")\""
 else
     vim "$TODOFILE";
 fi
