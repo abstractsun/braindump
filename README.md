@@ -44,12 +44,12 @@ All commands currently assume you stay in the same folder.
 - Adding "?" to the end of some commands which would otherwise open a file will instead print the name of the file
     - This works for `./note`, `./idea`, `./todo`, `./task [TASKNAME]`, `./log [LOGNAME]`, `./queue`, and `./scratch`
     - This can be used in vim to open another braindump file in a separate buffer without using termcap, for example:
-        ```
+        ```vim
         :split `./note ?`
         ```
 - You can make your note and idea files have different names in different situations by creating an executable called `.getdesc` which returns a descriptive name.
     - For example, if you are creating notes at home, your `.getdesc` file could look like this:
-        ```
+        ```bash
         #!/bin/bash
         echo "home"
         ```
