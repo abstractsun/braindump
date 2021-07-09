@@ -47,6 +47,13 @@ All commands currently assume you stay in the same folder.
         ```
         :split `./note ?`
         ```
+- You can make your note and idea files have different names in different situations by creating an executable called `.getdesc` which returns a descriptive name.
+    - For example, if you are creating notes at home, your `.getdesc` file could look like this:
+        ```
+        #!/bin/bash
+        echo "home"
+        ```
+      Then, `./note` would create notes that look like: "notes/note_home_YYYY-MM-DD.txt"
 
 ## License
 

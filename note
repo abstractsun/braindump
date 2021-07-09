@@ -5,6 +5,12 @@
 
 mkdir -p notes
 CONTEXT_DESC=""
+if [[ -x ".getdesc" ]]; then
+    CONTEXT_DESC="_""`./.getdesc`"
+elif [[ -f ".getdesc" ]]; then
+    echo "Error: .getdesc exists but is not executable"
+    exit 1
+fi
 DATE_DESC="_$(date +%Y-%m-%d)"
 NOTEFILE="notes/note${CONTEXT_DESC}${DATE_DESC}.txt";
 
