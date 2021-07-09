@@ -29,11 +29,8 @@ All commands currently assume you stay in the same folder.
         - Files with `[TRIAGE]` as the last line are ignored. They are considered fully reviewed.
 - `./task TASKNAME` - Opens the named task
     - If a line contains `[START]`, jump to that line
-    - `:loadview` is invoked to load the existing vim view if it exists. This is useful when the view contains folded lines.
-    - Files in the `tasks/archived` subdirectory are ignored, allowing the creation of a new task file with the same name
     - Variant: `./task` - Opens the tasks folder
 - `./log LOGNAME` - Opens the named log, appends a timestamp, and enters insert mode after the timestamp
-    - Files in the `logs/archived` subdirectory are ignored, allowing the creation of a new log file with the same name
 - `./pin` - Displays lines in notes/ideas/tasks containing `[PIN]`
 - `./tag TAGNAME` - Displays lines in notes/ideas containing `{TAGNAME}`, as well as the immediately preceding lines
 - `./scratch` - Edits a hidden scratch file
@@ -41,6 +38,11 @@ All commands currently assume you stay in the same folder.
     - Variant: `./queue`
 - `./qr "QR_MSG"` - A wrapper for [qrencode](https://fukuchi.org/works/qrencode/index.html.en) that displays a qr image which encodes the provided `QR_MSG`
     - Variant: `./qr` - Reads from stdin
+
+## Other tricks
+
+- Files in the `tasks/archived` and `logs/archived` subdirectories are ignored, allowing the creation of a new task/log files with the same names
+- When opening a task file, `:loadview` is invoked to load the existing vim view if it exists. This is useful when the view contains folded lines
 
 ## License
 
