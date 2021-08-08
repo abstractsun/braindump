@@ -14,8 +14,8 @@ elif [ -n "$1" ]; then
         touch "$TODOFILE"
     fi
     NEWTODOS="`echo "$1" | cat - "$TODOFILE"`"
-    printf "$NEWTODOS" > $TODOFILE &&
-    echo "Added TODO: \"$(head -n 1 "$TODOFILE")\""
+    echo "$NEWTODOS" > $TODOFILE &&
+        echo "Added TODO: \"$(head -n 1 "$TODOFILE")\""
 else
     vim "$TODOFILE";
 fi
