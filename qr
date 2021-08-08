@@ -22,4 +22,4 @@ else
     open "$PNG"
 fi
 
-printf "$1\n"
+echo "$1"
