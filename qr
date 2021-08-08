@@ -17,7 +17,7 @@ PNG=/tmp/braindump_qr_"$RANDOM".png
 qrencode "$1" -o "$PNG"
 
 if [ -n "`command -v xdg-open`" ]; then
-    xdg-open "$PNG"
+    nohup xdg-open "$PNG" &> /dev/null & disown
 else
     open "$PNG"
 fi
