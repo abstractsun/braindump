@@ -3,4 +3,4 @@
 # (c) abstractsun
 # License: GPL version 3 or, at your option, any later version
 
-grep -irns "\[PIN\]" ideas notes tasks | less
+find ideas notes tasks -type f | grep -vE ".*\.swp$" | grep -vE ".*~$" | xargs grep -irns "\[PIN\]" | less
