@@ -3,7 +3,7 @@
 # (c) abstractsun
 # License: GPL version 3 or, at your option, any later version
 
-if [ -z "`which qrencode`" ]; then
+if [ -z "`command -v qrencode`" ]; then
     echo "Error: qrencode not installed"
     exit;
 fi
@@ -16,7 +16,7 @@ fi
 PNG=/tmp/braindump_qr_"$RANDOM".png
 qrencode "$1" -o "$PNG"
 
-if [ -n "`which xdg-open`" ]; then
+if [ -n "`command -v xdg-open`" ]; then
     xdg-open "$PNG"
 else
     open "$PNG"
