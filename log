@@ -16,8 +16,9 @@ QM="$1"
 
 CDIR="$(pwd)"
 mkdir -p logs
+mkdir -p logs/archived
 cd logs
-MATCHING="$(printf "$(find . | grep -is $LOGNAME)")"
+MATCHING="$(printf "$(find . -type f | grep -is $LOGNAME | grep -vE "~$" | grep -vE "\.swp$" |  grep -vs archived | grep -is $LOGNAME)")"
 cd "$CDIR"
 
 if [ -z "$MATCHING" ]; then
