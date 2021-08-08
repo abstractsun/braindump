@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # braindump
 # (c) abstractsun
 # License: GPL version 3 or, at your option, any later version
