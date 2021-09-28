@@ -8,13 +8,15 @@ if [ -z "`command -v qrencode`" ]; then
     exit;
 fi
 
-if [ -z "$1" ]; then
-    echo "Nothing to qrify"
-    exit;
+TOQR="$1"
+if [[ -z "$TOQR" ]]; then
+    TOQR="$(cat /dev/stdin)"
 fi
 
+
 PNG=/tmp/braindump_qr_"$RANDOM".png
-qrencode "$1" -o "$PNG"
+qrencode "$TOQR" -o "$PNG"
+
 
 if [ -n "`command -v xdg-open`" ]; then
     nohup xdg-open "$PNG" &> /dev/null & disown
@@ -22,4 +24,4 @@ else
     open "$PNG"
 fi
 
-echo "$1"
+echo "$TOQR"
