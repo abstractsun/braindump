@@ -30,5 +30,7 @@ fi;
 if [[ "$QM" == "?" ]]; then
     echo "$LOGFILE"
 else
-    vim "$LOGFILE" -s .scripts/vim_log_start
+    vim "$LOGFILE" -c '$
+        read !date "+"\%"Y-"\%"m-"\%"d: "\%"I:"\%"M"\%"p: "
+        startinsert!'
 fi
