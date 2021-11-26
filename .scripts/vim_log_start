@@ -1,3 +1,3 @@
 G
-:read !.scripts/logdate.sh
+:read !date "+"\%"Y-"\%"m-"\%"d: "\%"I:"\%"M"\%"p: "
 $A
