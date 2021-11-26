@@ -3,8 +3,6 @@
 # (c) abstractsun
 # License: GPL version 3 or, at your option, any later version
 
-mkdir -p tasks;
-
 if [[ -z "$1" ]]; then
     TASKNAME=""
 elif [[ "$1" == "?" ]]; then
@@ -18,13 +16,39 @@ else
     fi
 fi
 
+if [[ -z "$BRAINDUMP_MAX_TASKS_SUGGESTED" ]]; then
+    BRAINDUMP_MAX_TASKS_SUGGESTED=6
+fi
+
 CDIR="$(pwd)"
 mkdir -p tasks
 mkdir -p tasks/archived
 
 if [[ -n "$TASKNAME" ]]; then
     cd tasks
-    MATCHING="$(printf "$(find . | grep -is $TASKNAME | grep -vE "~$" | grep -vE "\.swp$" | grep -vs archived)")"
+    OLDIFS="$IFS"
+    export IFS=$'\n'
+
+    MATCHSTRING="$(find . -type f -iregex "^\\(.+\\|\\)$TASKNAME\\(.+\\|\\)$" -not -regex ".*\.swp$" -not -regex ".*~$")"
+    for MATCH in $MATCHSTRING ; do
+        MATCH_IDX=$(($MATCH_IDX + 1))
+    done
+
+    if [[ $MATCH_IDX -gt "$BRAINDUMP_MAX_TASKS_SUGGESTED" ]]; then
+        # Suggest only BRAINDUMP_MAX_TASKS_SUGGESTED newest files
+        MATCH_OLDER="$(($MATCH_IDX - $BRAINDUMP_MAX_TASKS_SUGGESTED))"
+        if [[ $MATCH_OLDER -eq 1 ]]; then
+            echo "Not suggesting $MATCH_OLDER less recently modified file"
+        else
+            echo "Not suggesting $MATCH_OLDER less recently modified files"
+        fi
+        select MATCHING in $(ls -c $MATCHSTRING | head -"$BRAINDUMP_MAX_TASKS_SUGGESTED" | sort); do break; done
+    elif [[ $MATCH_IDX -gt 1 ]]; then
+        select MATCHING in $(echo "$MATCHSTRING" | sort); do break; done
+    else
+        MATCHING="$MATCHSTRING"
+    fi
+    export IFS="$OLDIFS"
     cd "$CDIR"
 fi
 
