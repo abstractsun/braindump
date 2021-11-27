@@ -49,8 +49,19 @@ All commands currently assume you stay in the same folder.
     - `$BRAINDUMP_EDITOR` gets highest priority and can safely accept command line parameters
     - The default text editor is nano, which is is simple and easy to use
     - vim provides the best experience
-- Files in the `tasks/archived` and `logs/archived` subdirectories are ignored, allowing the creation of a new task/log files with the same names
+- Files in the `tasks/archived` and `logs/archived` subdirectories are ignored, allowing the creation of new task/log files with the same names
 - When opening a task file in vim, `:loadview` is invoked to load the existing vim view if it exists. This is useful when the view contains folded lines
+- In a bash command line (and some others), you can quickly jump to/from the braindump folder by setting an alias:
+    ```bash
+    # Set this in your init file (`~/.bashrc`, `~/.bash_profile`, etc)
+    alias bd='pushd /path/to/my_braindump'
+    # Jump to notes folder
+    bd
+    # Write some notes...
+    ./todo "Follow up on thing"
+    # Return to previous folder
+    popd
+    ```
 - Adding "?" to the end of some commands which would otherwise open a file will instead print the name of the file
     - This works for `./note`, `./idea`, `./todo`, `./task [TASKNAME]`, `./log [LOGNAME]`, `./queue`, and `./scratch`
     - This can be used in vim to open another braindump file in a separate buffer without using termcap, for example:
