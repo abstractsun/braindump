@@ -8,7 +8,8 @@ if [[ -f "$COMPAT_SCRIPT" ]];then
     source "$COMPAT_SCRIPT"
 fi
 if [[ -z "$BRAINDUMP_EDITOR" ]]; then
-    BRAINDUMP_EDITOR="nano -T 4 -Eli --softwrap"
+    BRAINDUMP_EDITOR="nano"
+    function bd_open_file_line () { cat "/dev/null"; }
 fi
 export BRAINDUMP_EDITOR
 
@@ -26,7 +27,7 @@ if [ -n "$1" ]; then
 else
     if [[ "$BRAINDUMP_EDITOR" =~ vim ]]; then
         $BRAINDUMP_EDITOR + "$QUEUEFILE"
-    elif $BRAINDUMP_EDITOR_OPEN_WITH; then
+    elif [[ "$BRAINDUMP_EDITOR_OPEN_WITH" == true ]]; then
         LAST_LINE="`grep -c "" "$QUEUEFILE" `"
         bd_open_file_line "$QUEUEFILE" "$LAST_LINE"
     else

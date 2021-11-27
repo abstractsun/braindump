@@ -8,7 +8,8 @@ if [[ -f "$COMPAT_SCRIPT" ]];then
     source "$COMPAT_SCRIPT"
 fi
 if [[ -z "$BRAINDUMP_EDITOR" ]]; then
-    BRAINDUMP_EDITOR="nano -T 4 -Eli --softwrap"
+    BRAINDUMP_EDITOR="nano"
+    function bd_open_file_line () { cat "/dev/null"; }
 fi
 export BRAINDUMP_EDITOR
 

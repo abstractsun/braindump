@@ -8,7 +8,8 @@ if [[ -f "$COMPAT_SCRIPT" ]];then
     source "$COMPAT_SCRIPT"
 fi
 if [[ -z "$BRAINDUMP_EDITOR" ]]; then
-    BRAINDUMP_EDITOR="nano -T 4 -Eli --softwrap"
+    BRAINDUMP_EDITOR="nano"
+    function bd_open_file_line () { cat "/dev/null"; }
 fi
 export BRAINDUMP_EDITOR
 
@@ -72,7 +73,7 @@ else
         $BRAINDUMP_EDITOR "$LOGFILE" -c '$
             read !date "+"\%"Y-"\%"m-"\%"d: "\%"I:"\%"M"\%"p: "
             startinsert!'
-    elif $BRAINDUMP_EDITOR_OPEN_WITH; then
+    elif [[ "$BRAINDUMP_EDITOR_OPEN_WITH" == true ]]; then
         date "+%Y-%m-%d: %I:%M%p:" >> $LOGFILE
         LAST_LINE="`grep -c "" "$LOGFILE" `"
         bd_open_file_line "$LOGFILE" "$LAST_LINE"
