@@ -1,6 +1,6 @@
 # braindump
 
-**braindump** is a collection of notetaking scripts for unix/[vim](https://www.vim.org/).
+**braindump** is a collection of notetaking scripts run from the command line.
 
 I created these scripts because I was tired of using email/instant messaging for notes. I needed a better system, that would help me get stuff out of my head as quickly as possible, but still stay somewhat organized.
 
@@ -11,6 +11,12 @@ If you were looking for the next groundbreaking productivity/collaboration suite
 - Has various commands for opening files to write in
 - When opening a file, jumps to the important line
 - `./triage` semi-automates the note/idea review process
+
+## Ingredients
+
+Currently, to run most braindump scripts, you'll need bash, GNU find, and some other standard utilities available on your `$PATH`.
+
+Braindump uses nano by default for text editing. See the "Other tricks" section for how to select the text editor.
 
 ## The commands
 
@@ -27,8 +33,8 @@ All commands currently assume you stay in the same folder.
     - Note/idea files with `[TRIAGE]` as the last line are ignored. They are considered fully reviewed.
 - `./task TASKNAME` - Opens the named task
     - You can write `[START]` in a task file to mark where you left off
-    - Variant: `./task` - Opens the tasks folder
-- `./log LOGNAME` - Opens the named log, appends a timestamp, and enters insert mode after the timestamp
+    - Variant: `./task` - Opens the tasks folder (if possible)
+- `./log LOGNAME` - Opens the named log, appends a timestamp, and (if using vim) enters insert mode after the timestamp
 - `./pin` - Displays lines in notes/ideas/tasks containing `[PIN]`
 - `./tag TAGNAME` - Displays lines in notes/ideas containing `{TAGNAME}`, as well as the immediately preceding lines
 - `./scratch` - Edits a hidden scratch file
@@ -39,8 +45,12 @@ All commands currently assume you stay in the same folder.
 
 ## Other tricks
 
+- To select the text editor that braindump uses, export an environment variable (`$BRAINDUMP_EDITOR`, `$VISUAL`, or `$EDITOR`)
+    - `$BRAINDUMP_EDITOR` gets highest priority and can safely accept command line parameters
+    - The default text editor is nano, which is is simple and easy to use
+    - vim provides the best experience
 - Files in the `tasks/archived` and `logs/archived` subdirectories are ignored, allowing the creation of a new task/log files with the same names
-- When opening a task file, `:loadview` is invoked to load the existing vim view if it exists. This is useful when the view contains folded lines
+- When opening a task file in vim, `:loadview` is invoked to load the existing vim view if it exists. This is useful when the view contains folded lines
 - Adding "?" to the end of some commands which would otherwise open a file will instead print the name of the file
     - This works for `./note`, `./idea`, `./todo`, `./task [TASKNAME]`, `./log [LOGNAME]`, `./queue`, and `./scratch`
     - This can be used in vim to open another braindump file in a separate buffer without using termcap, for example:
