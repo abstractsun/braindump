@@ -3,6 +3,16 @@
 # (c) abstractsun
 # License: GPL version 3 or, at your option, any later version
 
+COMPAT_SCRIPT=".scripts/editor_compat"
+if [[ -f "$COMPAT_SCRIPT" ]];then
+    source "$COMPAT_SCRIPT"
+fi
+if [[ -z "$BRAINDUMP_EDITOR" ]]; then
+    BRAINDUMP_EDITOR="nano -T 4 -Eli --softwrap"
+fi
+export BRAINDUMP_EDITOR
+
+OLDIFS=$IFS
 IFS=$'\n'
 
 ENABLE_TRIAGE_CACHE=true
@@ -57,10 +67,10 @@ if [ -z "$ALL" ]; then
 
     ALL="";
     if [ -d ideas ]; then
-        ALL+="$(printf "\n$(find $PWD/ideas/* -type f $TIME_ARG $TIME_ARG_2 | grep -vE "~$")")"
+        ALL+="$(echo $'\n'"$(find $PWD/ideas/* -type f $TIME_ARG $TIME_ARG_2 -not -regex ".*\.swp$" -not -regex ".*~$" -not -regex ".*#$")")"
     fi;
     if [ -d notes ]; then
-        ALL+="$(printf "\n$(find $PWD/notes/* -type f $TIME_ARG $TIME_ARG_2 | grep -vE "~$")")"
+        ALL+="$(echo $'\n'"$(find $PWD/notes/* -type f $TIME_ARG $TIME_ARG_2 -not -regex ".*\.swp$" -not -regex ".*~$" -not -regex ".*#$")")"
     fi;
 fi;
 
@@ -107,6 +117,17 @@ for file in $NEEDING_TRIAGE; do
     echo "Opening file for triage: (Ctrl+C to cancel)";
     echo "$file";
     sleep 4;
-    vim "$file" -s .scripts/vim_triage_start;
+    if [[ "$BRAINDUMP_EDITOR" =~ vim ]]; then
+        $BRAINDUMP_EDITOR "$file" -s .scripts/vim_triage_start;
+    elif $BRAINDUMP_EDITOR_OPEN_WITH; then
+        TRIAGE_LINE="`grep -n [TRIAGE] "$file" | sed "s/:.*//" | head -1`"
+        # Reverting IFS ensures that parameter expansion works properly in the custom editor command
+        IFS=$OLDIFS
+        bd_open_file_line "$file" "$TRIAGE_LINE"
+        OLDIFS=$IFS
+        IFS=$'\n'
+    else
+        $BRAINDUMP_EDITOR "$file"
+    fi
 done
 

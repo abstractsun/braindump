@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# source
+
+if [[ -z "$BRAINDUMP_EDITOR" ]]; then
+    BRAINDUMP_EDITOR="$VISUAL"
+fi
+if [[ -z "$BRAINDUMP_EDITOR" ]]; then
+    BRAINDUMP_EDITOR="$EDITOR"
+fi
+
+if [[ "$BRAINDUMP_EDITOR" =~ emacs|nano|kak|geany ]]; then
+    # Emacs, Nano, Kakoune, Geany
+    BRAINDUMP_EDITOR_OPEN_WITH=true
+    function bd_open_file_line () {
+        if [[ -f "$1" && -n "$2" ]]; then
+            $BRAINDUMP_EDITOR +$2 $1
+        else
+            $BRAINDUMP_EDITOR $1
+        fi
+    }
+else
+    function bd_open_file_line () {
+        $BRAINDUMP_EDITOR $1
+    }
+fi

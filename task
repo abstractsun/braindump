@@ -3,6 +3,15 @@
 # (c) abstractsun
 # License: GPL version 3 or, at your option, any later version
 
+COMPAT_SCRIPT=".scripts/editor_compat"
+if [[ -f "$COMPAT_SCRIPT" ]];then
+    source "$COMPAT_SCRIPT"
+fi
+if [[ -z "$BRAINDUMP_EDITOR" ]]; then
+    BRAINDUMP_EDITOR="nano -T 4 -Eli --softwrap"
+fi
+export BRAINDUMP_EDITOR
+
 if [[ -z "$1" ]]; then
     TASKNAME=""
 elif [[ "$1" == "?" ]]; then
@@ -29,7 +38,7 @@ if [[ -n "$TASKNAME" ]]; then
     OLDIFS="$IFS"
     export IFS=$'\n'
 
-    MATCHSTRING="$(find . -type f -iregex "^\\(.+\\|\\)$TASKNAME\\(.+\\|\\)$" -not -regex ".*\.swp$" -not -regex ".*~$")"
+    MATCHSTRING="$(find . -type f -iregex "^\\(.+\\|\\)$TASKNAME\\(.+\\|\\)$" -not -regex ".*\.swp$" -not -regex ".*~$" -not -regex ".*#$")"
     for MATCH in $MATCHSTRING ; do
         MATCH_IDX=$(($MATCH_IDX + 1))
     done
@@ -69,9 +78,16 @@ fi;
 if [[ "$QM" == "?" ]]; then
     echo "$TASKFILE"
 elif "$LOAD_SCRIPT"; then
-    vim "$TASKFILE" -s .scripts/vim_task_start
+    if [[ "$BRAINDUMP_EDITOR" =~ vim ]]; then
+        $BRAINDUMP_EDITOR "$TASKFILE" -s .scripts/vim_task_start
+    elif $BRAINDUMP_EDITOR_OPEN_WITH; then
+        TASK_LINE="`grep -n [START] "$TASKFILE" | sed "s/:.*//" | head -1`"
+        bd_open_file_line "$TASKFILE" "$TASK_LINE"
+    else
+        $BRAINDUMP_EDITOR "$TASKFILE"
+    fi
 else
-    vim "$TASKFILE"
+    $BRAINDUMP_EDITOR "$TASKFILE"
 fi
 
 cd $CDIR

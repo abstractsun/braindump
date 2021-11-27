@@ -3,6 +3,15 @@
 # (c) abstractsun
 # License: GPL version 3 or, at your option, any later version
 
+COMPAT_SCRIPT=".scripts/editor_compat"
+if [[ -f "$COMPAT_SCRIPT" ]];then
+    source "$COMPAT_SCRIPT"
+fi
+if [[ -z "$BRAINDUMP_EDITOR" ]]; then
+    BRAINDUMP_EDITOR="nano -T 4 -Eli --softwrap"
+fi
+export BRAINDUMP_EDITOR
+
 mkdir -p logs;
 
 LOGNAME="$1"
@@ -18,7 +27,7 @@ CDIR="$(pwd)"
 mkdir -p logs
 mkdir -p logs/archived
 cd logs
-MATCHING="$(printf "$(find . -type f | grep -is $LOGNAME | grep -vE "~$" | grep -vE "\.swp$" |  grep -vs archived | grep -is $LOGNAME)")"
+MATCHING="$(echo "$(find . -type f -regex "$LOGNAME" -not -regex ".*\.swp$" -not -regex ".*~$" -not -regex ".*#$" |  grep -vs archived | grep -is $LOGNAME)")"
 cd "$CDIR"
 
 if [ -z "$MATCHING" ]; then
@@ -30,7 +39,16 @@ fi;
 if [[ "$QM" == "?" ]]; then
     echo "$LOGFILE"
 else
-    vim "$LOGFILE" -c '$
-        read !date "+"\%"Y-"\%"m-"\%"d: "\%"I:"\%"M"\%"p: "
-        startinsert!'
+    if [[ "$BRAINDUMP_EDITOR" =~ vim ]]; then
+        $BRAINDUMP_EDITOR "$LOGFILE" -c '$
+            read !date "+"\%"Y-"\%"m-"\%"d: "\%"I:"\%"M"\%"p: "
+            startinsert!'
+    elif $BRAINDUMP_EDITOR_OPEN_WITH; then
+        date "+%Y-%m-%d: %I:%M%p:" >> $LOGFILE
+        LAST_LINE="`grep -c "" "$LOGFILE" `"
+        bd_open_file_line "$LOGFILE" "$LAST_LINE"
+    else
+        date "+%Y-%m-%d: %I:%M%p:" >> $LOGFILE
+        $BRAINDUMP_EDITOR "$LOGFILE"
+    fi
 fi

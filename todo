@@ -3,6 +3,15 @@
 # (c) abstractsun
 # License: GPL version 3 or, at your option, any later version
 
+COMPAT_SCRIPT=".scripts/editor_compat"
+if [[ -f "$COMPAT_SCRIPT" ]];then
+    source "$COMPAT_SCRIPT"
+fi
+if [[ -z "$BRAINDUMP_EDITOR" ]]; then
+    BRAINDUMP_EDITOR="nano -T 4 -Eli --softwrap"
+fi
+export BRAINDUMP_EDITOR
+
 mkdir -p tasks
 
 TODOFILE="tasks/todo.txt"
@@ -17,5 +26,5 @@ elif [ -n "$1" ]; then
     echo "$NEWTODOS" > $TODOFILE &&
         echo "Added TODO: \"$(head -n 1 "$TODOFILE")\""
 else
-    vim "$TODOFILE";
+    $BRAINDUMP_EDITOR "$TODOFILE";
 fi

@@ -3,6 +3,15 @@
 # (c) abstractsun
 # License: GPL version 3 or, at your option, any later version
 
+COMPAT_SCRIPT=".scripts/editor_compat"
+if [[ -f "$COMPAT_SCRIPT" ]];then
+    source "$COMPAT_SCRIPT"
+fi
+if [[ -z "$BRAINDUMP_EDITOR" ]]; then
+    BRAINDUMP_EDITOR="nano -T 4 -Eli --softwrap"
+fi
+export BRAINDUMP_EDITOR
+
 mkdir -p notes
 CONTEXT_DESC=""
 if [[ -x ".getdesc" ]]; then
@@ -21,5 +30,14 @@ elif [ -n "$1" ]; then
     echo "$1" >> "$NOTEFILE"
     echo "Added note: \"$(tail -n 1 "$NOTEFILE")\""
 else
-    vim + "$NOTEFILE"
+    if [[ "$BRAINDUMP_EDITOR" =~ vim ]]; then
+        $BRAINDUMP_EDITOR + "$NOTEFILE"
+    elif $BRAINDUMP_EDITOR_OPEN_WITH; then
+        if [[ -f "$NOTEFILE" ]]; then
+            LAST_LINE="`grep -c "" "$NOTEFILE" `"
+        fi
+        bd_open_file_line "$NOTEFILE" "$LAST_LINE"
+    else
+        $BRAINDUMP_EDITOR "$NOTEFILE"
+    fi
 fi

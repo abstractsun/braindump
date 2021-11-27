@@ -3,10 +3,19 @@
 # (c) abstractsun
 # License: GPL version 3 or, at your option, any later version
 
+COMPAT_SCRIPT=".scripts/editor_compat"
+if [[ -f "$COMPAT_SCRIPT" ]];then
+    source "$COMPAT_SCRIPT"
+fi
+if [[ -z "$BRAINDUMP_EDITOR" ]]; then
+    BRAINDUMP_EDITOR="nano -T 4 -Eli --softwrap"
+fi
+export BRAINDUMP_EDITOR
+
 mkdir -p .braindump
 SCRATCHFILE=".braindump/scratch.txt"
 if [[ "$1" == "?" ]]; then
     echo "$SCRATCHFILE"
     exit
 fi
-vim "$SCRATCHFILE";
+$BRAINDUMP_EDITOR "$SCRATCHFILE"
