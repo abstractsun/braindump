@@ -23,12 +23,41 @@ if [[ "$1" != "?" ]]; then
 fi
 QM="$1"
 
+if [[ -z "$BRAINDUMP_MAX_LOGS_SUGGESTED" ]]; then
+    BRAINDUMP_MAX_LOGS_SUGGESTED=6
+fi
+
 CDIR="$(pwd)"
 mkdir -p logs
 mkdir -p logs/archived
-cd logs
-MATCHING="$(echo "$(find . -type f -regex "$LOGNAME" -not -regex ".*\.swp$" -not -regex ".*~$" -not -regex ".*#$" |  grep -vs archived | grep -is $LOGNAME)")"
-cd "$CDIR"
+
+if [[ -n "$LOGNAME" ]]; then
+    cd logs
+    OLDIFS="$IFS"
+    export IFS=$'\n'
+
+    MATCHSTRING="$(find . -type f -iregex "^\\(.+\\|\\)$LOGNAME\\(.+\\|\\)$" -not -regex ".*\.swp$" -not -regex ".*~$" -not -regex ".*#$" -not -regex "^\\(.+\\|\\)archived\\(.+\\|\\)$")"
+    for MATCH in $MATCHSTRING ; do
+        MATCH_IDX=$(($MATCH_IDX + 1))
+    done
+
+    if [[ $MATCH_IDX -gt "$BRAINDUMP_MAX_LOGS_SUGGESTED" ]]; then
+        # Suggest only BRAINDUMP_MAX_LOGS_SUGGESTED newest files
+        MATCH_OLDER="$(($MATCH_IDX - $BRAINDUMP_MAX_LOGS_SUGGESTED))"
+        if [[ $MATCH_OLDER -eq 1 ]]; then
+            echo "Not suggesting $MATCH_OLDER less recently modified file"
+        else
+            echo "Not suggesting $MATCH_OLDER less recently modified files"
+        fi
+        select MATCHING in $(ls -c $MATCHSTRING | head -"$BRAINDUMP_MAX_LOGS_SUGGESTED" | sort); do break; done
+    elif [[ $MATCH_IDX -gt 1 ]]; then
+        select MATCHING in $(echo "$MATCHSTRING" | sort); do break; done
+    else
+        MATCHING="$MATCHSTRING"
+    fi
+    export IFS="$OLDIFS"
+    cd "$CDIR"
+fi
 
 if [ -z "$MATCHING" ]; then
     LOGFILE="logs/${LOGNAME}_$(date +%Y-%m-%d).txt"
