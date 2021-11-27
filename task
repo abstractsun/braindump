@@ -80,7 +80,7 @@ if [[ "$QM" == "?" ]]; then
     echo "$TASKFILE"
 elif "$LOAD_SCRIPT"; then
     if [[ "$BRAINDUMP_EDITOR" =~ vim ]]; then
-        $BRAINDUMP_EDITOR "$TASKFILE" -s .scripts/vim_task_start
+        $BRAINDUMP_EDITOR "$TASKFILE" -s .scripts/vim_task_start || $BRAINDUMP_EDITOR "$TASKFILE"
     elif [[ "$BRAINDUMP_EDITOR_OPEN_WITH" == true ]]; then
         TASK_LINE="`grep -n [START] "$TASKFILE" | sed "s/:.*//" | head -1`"
         bd_open_file_line "$TASKFILE" "$TASK_LINE"

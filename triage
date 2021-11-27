@@ -119,7 +119,7 @@ for file in $NEEDING_TRIAGE; do
     echo "$file";
     sleep 4;
     if [[ "$BRAINDUMP_EDITOR" =~ vim ]]; then
-        $BRAINDUMP_EDITOR "$file" -s .scripts/vim_triage_start;
+        $BRAINDUMP_EDITOR "$file" -s .scripts/vim_triage_start || "$BRAINDUMP_EDITOR" "$file";
     elif [[ "$BRAINDUMP_EDITOR_OPEN_WITH" == true ]]; then
         TRIAGE_LINE="`grep -n [TRIAGE] "$file" | sed "s/:.*//" | head -1`"
         # Reverting IFS ensures that parameter expansion works properly in the custom editor command
