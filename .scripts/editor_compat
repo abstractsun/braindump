@@ -7,6 +7,9 @@ fi
 if [[ -z "$BRAINDUMP_EDITOR" ]]; then
     BRAINDUMP_EDITOR="$EDITOR"
 fi
+if [[ -z "$BRAINDUMP_EDITOR" ]]; then
+    BRAINDUMP_EDITOR="nano -T 4 -Elim --softwrap"
+fi
 
 if [[ "$BRAINDUMP_EDITOR" =~ emacs|nano|kak|geany ]]; then
     # Emacs, Nano, Kakoune, Geany
