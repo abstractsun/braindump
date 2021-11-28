@@ -42,7 +42,11 @@ if [[ -n "$LOGNAME" ]]; then
         MATCH_IDX=$(($MATCH_IDX + 1))
     done
 
-    if [[ $MATCH_IDX -gt "$BRAINDUMP_MAX_LOGS_SUGGESTED" ]]; then
+    if [[ "$QM" == "?" && $MATCH_IDX -gt 1 ]]; then
+        # Log name ambiguous - print the directory name and exit
+        echo "logs/"
+        exit
+    elif [[ $MATCH_IDX -gt "$BRAINDUMP_MAX_LOGS_SUGGESTED" ]]; then
         # Suggest only BRAINDUMP_MAX_LOGS_SUGGESTED newest files
         MATCH_OLDER="$(($MATCH_IDX - $BRAINDUMP_MAX_LOGS_SUGGESTED))"
         if [[ $MATCH_OLDER -eq 1 ]]; then

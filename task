@@ -44,7 +44,11 @@ if [[ -n "$TASKNAME" ]]; then
         MATCH_IDX=$(($MATCH_IDX + 1))
     done
 
-    if [[ $MATCH_IDX -gt "$BRAINDUMP_MAX_TASKS_SUGGESTED" ]]; then
+    if [[ "$QM" == "?" && $MATCH_IDX -gt 1 ]]; then
+        # Task name ambiguous - print the directory name and exit
+        echo "tasks/"
+        exit
+    elif [[ $MATCH_IDX -gt "$BRAINDUMP_MAX_TASKS_SUGGESTED" ]]; then
         # Suggest only BRAINDUMP_MAX_TASKS_SUGGESTED newest files
         MATCH_OLDER="$(($MATCH_IDX - $BRAINDUMP_MAX_TASKS_SUGGESTED))"
         if [[ $MATCH_OLDER -eq 1 ]]; then
