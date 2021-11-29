@@ -13,6 +13,10 @@ if [[ -z "$BRAINDUMP_EDITOR" ]]; then
 fi
 export BRAINDUMP_EDITOR
 
+if [[ -z "$BRAINDUMP_FILE_SUFFIX" ]]; then
+    BRAINDUMP_FILE_SUFFIX=".txt"
+fi
+
 mkdir -p notes
 CONTEXT_DESC=""
 if [[ -x ".getdesc" ]]; then
@@ -22,7 +26,7 @@ elif [[ -f ".getdesc" ]]; then
     exit 1
 fi
 DATE_DESC="_$(date +%Y-%m-%d)"
-NOTEFILE="notes/note${CONTEXT_DESC}${DATE_DESC}.txt";
+NOTEFILE="notes/note${CONTEXT_DESC}${DATE_DESC}${BRAINDUMP_FILE_SUFFIX}";
 
 
 if [[ "$1" == "?" && -z "$2" ]]; then

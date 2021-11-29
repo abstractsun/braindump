@@ -13,6 +13,10 @@ if [[ -z "$BRAINDUMP_EDITOR" ]]; then
 fi
 export BRAINDUMP_EDITOR
 
+if [[ -z "$BRAINDUMP_FILE_SUFFIX" ]]; then
+    BRAINDUMP_FILE_SUFFIX=".txt"
+fi
+
 mkdir -p logs;
 
 LOGNAME="$1"
@@ -65,7 +69,7 @@ if [[ -n "$LOGNAME" ]]; then
 fi
 
 if [ -z "$MATCHING" ]; then
-    LOGFILE="logs/${LOGNAME}_$(date +%Y-%m-%d).txt"
+    LOGFILE="logs/${LOGNAME}_$(date +%Y-%m-%d)${BRAINDUMP_FILE_SUFFIX}"
 else
     LOGFILE="logs/${MATCHING[0]}"
 fi;

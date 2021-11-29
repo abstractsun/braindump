@@ -13,6 +13,10 @@ if [[ -z "$BRAINDUMP_EDITOR" ]]; then
 fi
 export BRAINDUMP_EDITOR
 
+if [[ -z "$BRAINDUMP_FILE_SUFFIX" ]]; then
+    BRAINDUMP_FILE_SUFFIX=".txt"
+fi
+
 if [[ -z "$1" ]]; then
     TASKNAME=""
 elif [[ "$1" == "?" ]]; then
@@ -71,10 +75,10 @@ LOAD_SCRIPT=false
 if [[ -z "$TASKNAME" ]]; then
     TASKFILE="tasks"
 elif [ -z "$MATCHING" ]; then
-    TASKFILE="tasks/${TASKNAME}_$(date +%Y-%m-%d).txt"
+    TASKFILE="tasks/${TASKNAME}_$(date +%Y-%m-%d)${BRAINDUMP_FILE_SUFFIX}"
     LOAD_SCRIPT=true
 elif [[ "$TASKNAME" == "todo" ]]; then
-    TASKFILE="tasks/todo.txt"
+    TASKFILE="tasks/todo${BRAINDUMP_FILE_SUFFIX}"
 else
     TASKFILE="tasks/${MATCHING[0]}"
     LOAD_SCRIPT=true

@@ -13,8 +13,12 @@ if [[ -z "$BRAINDUMP_EDITOR" ]]; then
 fi
 export BRAINDUMP_EDITOR
 
+if [[ -z "$BRAINDUMP_FILE_SUFFIX" ]]; then
+    BRAINDUMP_FILE_SUFFIX=".txt"
+fi
+
 mkdir -p .braindump
-QUEUEFILE=".braindump/queue.txt"
+QUEUEFILE=".braindump/queue${BRAINDUMP_FILE_SUFFIX}"
 
 if [[ "$1" == "?" && -z "$2" ]]; then
     echo "$QUEUEFILE"

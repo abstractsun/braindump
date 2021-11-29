@@ -13,9 +13,19 @@ if [[ -z "$BRAINDUMP_EDITOR" ]]; then
 fi
 export BRAINDUMP_EDITOR
 
+if [[ -z "$BRAINDUMP_FILE_SUFFIX" ]]; then
+    BRAINDUMP_FILE_SUFFIX=".txt"
+fi
+
 mkdir -p tasks
 
-TODOFILE="tasks/todo.txt"
+DEFAULT_TODOFILE="tasks/todo${BRAINDUMP_FILE_SUFFIX}"
+if [[ ! -f "$DEFAULT_TODOFILE" ]]; then
+    TODOFILE="$(find tasks -maxdepth 1 -type f -regex "tasks/todo\\(.+\\|\\)$" -not -regex ".*\.swp$" -not -regex ".*~$" -not -regex ".*#$" | head -1)"
+fi
+if [[ -z "$TODOFILE" ]]; then
+    TODOFILE="$DEFAULT_TODOFILE"
+fi
 
 if [[ "$1" == "?" && -z "$2" ]]; then
     echo "$TODOFILE"

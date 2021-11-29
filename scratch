@@ -13,8 +13,12 @@ if [[ -z "$BRAINDUMP_EDITOR" ]]; then
 fi
 export BRAINDUMP_EDITOR
 
+if [[ -z "$BRAINDUMP_FILE_SUFFIX" ]]; then
+    BRAINDUMP_FILE_SUFFIX=".txt"
+fi
+
 mkdir -p .braindump
-SCRATCHFILE=".braindump/scratch.txt"
+SCRATCHFILE=".braindump/scratch${BRAINDUMP_FILE_SUFFIX}"
 if [[ "$1" == "?" ]]; then
     echo "$SCRATCHFILE"
     exit
