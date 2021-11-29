@@ -9,7 +9,7 @@ if [[ -f "$COMPAT_SCRIPT" ]];then
 fi
 if [[ -z "$BRAINDUMP_EDITOR" ]]; then
     BRAINDUMP_EDITOR="nano"
-    function bd_open_file_line () {}
+    function bd_open_file_line () { cat "/dev/null"; }
 fi
 export BRAINDUMP_EDITOR
 
