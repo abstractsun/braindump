@@ -112,7 +112,9 @@ if [[ $NEED_TRIAGE_COUNT > 0 ]]; then
         echo "triage thinks the stalest file needing triage is $OLDEST_NEEDING_TRIAGE"
         echo "It was last modified on: $NEW_OLDEST_NEEDING_TRIAGE_TIMESTAMP"
     fi
-fi;
+else
+    echo "Nothing left to triage"
+fi
 
 for file in $NEEDING_TRIAGE; do
     echo "Opening file for triage: (Ctrl+C to cancel)";
