@@ -49,6 +49,7 @@ All commands currently assume you stay in the same folder.
     - `$BRAINDUMP_EDITOR` gets highest priority and can safely accept command line parameters
     - The default text editor is nano, which is is simple and easy to use
     - vim provides the best experience
+    - You may also prefer to change the file type by setting `$BRAINDUMP_FILE_SUFFIX`. Its default value is `.txt`
 - Files in the `tasks/archived` and `logs/archived` subdirectories are ignored, allowing the creation of new task/log files with the same names
 - When opening a task file in vim, `:loadview` is invoked to load the existing vim view if it exists. This is useful when the view contains folded lines
 - In a bash command line (and some others), you can quickly jump to/from the braindump folder by setting an alias:
