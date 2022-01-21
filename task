@@ -43,7 +43,7 @@ if [[ -n "$TASKNAME" ]]; then
     OLDIFS="$IFS"
     export IFS=$'\n'
 
-    MATCHSTRING="$(find . -type f -iregex "^\\(.+\\|\\)$TASKNAME\\(.+\\|\\)$" -not -regex ".*\.swp$" -not -regex ".*~$" -not -regex ".*#$" -not -regex "^\\(.+\\|\\)archived\\(.+\\|\\)$")"
+    MATCHSTRING="$(find . -type f -iregex "^\\(.+\\|\\)$TASKNAME\\(.+\\|\\)$" -not -regex ".*\.swp$" -not -regex ".*~$" -not -regex ".*#$" -not -regex ".*\.bak$" -not -regex "^\\(.+\\|\\)archived\\(.+\\|\\)$")"
     for MATCH in $MATCHSTRING ; do
         MATCH_IDX=$(($MATCH_IDX + 1))
     done

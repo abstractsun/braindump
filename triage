@@ -68,10 +68,10 @@ if [ -z "$ALL" ]; then
 
     ALL="";
     if [ -d ideas ]; then
-        ALL+="$(echo $'\n'"$(find $PWD/ideas/* -type f $TIME_ARG $TIME_ARG_2 -not -regex ".*\.swp$" -not -regex ".*~$" -not -regex ".*#$")")"
+        ALL+="$(echo $'\n'"$(find $PWD/ideas/* -type f $TIME_ARG $TIME_ARG_2 -not -regex ".*\.swp$" -not -regex ".*~$" -not -regex ".*#$" -not -regex ".*\.bak$")")"
     fi;
     if [ -d notes ]; then
-        ALL+="$(echo $'\n'"$(find $PWD/notes/* -type f $TIME_ARG $TIME_ARG_2 -not -regex ".*\.swp$" -not -regex ".*~$" -not -regex ".*#$")")"
+        ALL+="$(echo $'\n'"$(find $PWD/notes/* -type f $TIME_ARG $TIME_ARG_2 -not -regex ".*\.swp$" -not -regex ".*~$" -not -regex ".*#$" -not -regex ".*\.bak$")")"
     fi;
 fi;
 
