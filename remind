@@ -1,0 +1,671 @@
+#!/usr/bin/env bash
+# braindump
+# (c) abstractsun
+# License: GPL version 3 or, at your option, any later version
+
+mkdir -p .braindump
+
+
+
+get_unixdate_if_future() {
+    local future_date_input="$1"
+    local future_date_seconds="`date --date="$future_date_input" +%s 2> /dev/null`"
+    local now_seconds="`date +%s 2> /dev/null`"
+    if [[ -z "$future_date_seconds" ]]; then
+        echo invalid
+    elif [[ "$future_date_seconds" -gt "$now_seconds" ]]; then
+        echo "$future_date_seconds"
+    else
+        echo past
+    fi
+}
+
+is_date_invalid() {
+    local invalid_date_result="`get_unixdate_if_future "$1"`"
+    if [[ "$invalid_date_result" = invalid ]]; then
+        echo true
+    else
+        echo false
+    fi
+}
+
+parse_future_date_unix() {
+    local future_date_input="$1"
+    local future_date_seconds="`get_unixdate_if_future "$future_date_input"`"
+    if [[ "$future_date_seconds" = invalid ]]; then
+        echo "Invalid date: \"$future_date_input\"" > /dev/stderr
+        if [[ "$future_date_input" =~ "invalid" ]]; then
+            echo "$future_date_input"
+        else
+            echo "(invalid date) $future_date_input"
+        fi
+        return
+    fi
+    if [[ "$future_date_seconds" != past ]]; then echo "$future_date_seconds"; return; fi
+
+    local original_future_date_seconds="$future_date_seconds"
+
+    local has_timezone="`is_date_invalid "$future_date_input UTC"`"
+    if $has_timezone; then
+        # Date likely already formatted
+        echo "$original_future_date_seconds"
+        return
+    fi
+
+    local has_day_month="`is_date_invalid "$future_date_input jan 1"`"
+    if $has_day_month; then
+        # Try next year
+        future_date_seconds="`get_unixdate_if_future "$future_date_input next year"`"
+        if [[ "$future_date_seconds" != invalid && "$future_date_seconds" != past ]]; then
+            echo "$future_date_seconds"
+            return
+        else
+            # Give up
+            echo "$original_future_date_seconds"
+            return
+        fi
+    fi
+
+    local has_hour="`is_date_invalid "$future_date_input 12am"`"
+    if $has_hour; then
+        # Try next day
+        future_date_seconds="`get_unixdate_if_future "$future_date_input tomorrow"`"
+        if [[ "$future_date_seconds" != invalid && "$future_date_seconds" != past ]]; then
+            echo "$future_date_seconds"
+            return
+        else
+            # Give up
+            echo "$original_future_date_seconds"
+            return
+        fi
+    fi
+
+    # Give up
+    echo "$original_future_date_seconds"
+}
+
+parse_future_date()
+{
+    local future_date_unix="`parse_future_date_unix "$1"`"
+    # future_date_unix may be an invalid date, in which case just return the invalid value instead 
+    future_date="`date --date="@$future_date_unix" 2> /dev/null`"
+    if [[ -n "$future_date" ]]; then
+        echo "$future_date"
+    else
+        echo "$future_date_unix"
+    fi
+}
+
+# Given a filter function $1, an input string $2, and optional additional
+# parameters, outputs "A;B" where A is the number of reminders found, and B is
+# the formatted version of the input string transformed by the filter function.
+# The filter function is passed in remind_pre, remind_begin, remind_mid, and
+# remind_end, where remind_mid is the timestamp data and remind_pre is other
+# data in the string not associated with the reminder. remind_begin et. al. may
+# be empty, in which case the filter function should ignore them.
+for_each_reminder()
+{
+    func="$1"
+    shift
+    reminders="$1"
+    shift
+
+    reminders_found=0
+    formatted_reminder=""
+
+    # Define the search strings
+    # Parsing assumes remind_end is 1 character
+    local remind_begin="[remind "
+    local remind_end="]"
+
+    # Parsing is tracked using cursors to absolute positions in the input string $1
+    local n="${#reminders}"
+    local remind_token_pre=0
+    local i=0
+    while [[ $i -lt $n ]]; do
+        # Check for possible token
+        local remind_token_begin=$i
+        local remind_token_mid=$(($remind_token_begin + ${#remind_begin}))
+        local j=$remind_token_begin
+        while [[ $j -lt $remind_token_mid && $j -lt $n ]]; do
+            if [[ "${reminders:$j:1}" != "${remind_begin:$j-$remind_token_begin:1}" ]]; then
+                break
+            fi
+            j=$(($j+1))
+        done
+        if [[ $j -lt $remind_token_mid ]]; then
+            i=$(($i+1))
+            continue
+        fi
+        local remind_token_end=$(($remind_token_mid + 1))
+        while [[ $remind_token_end -lt $n && "${reminders:remind_token_end:1}" != "$remind_end" ]]; do
+            remind_token_end=$(($remind_token_end+1))
+        done
+
+        # Filter the match along with any preceding characters that didn't match
+        local remind_pre="${reminders:$remind_token_pre:$(($remind_token_begin-$remind_token_pre))}"
+        local remind_mid="${reminders:$remind_token_mid:$(($remind_token_end-$remind_token_mid))}"
+
+        formatted_reminder="$formatted_reminder$($func "$remind_pre" "$remind_begin" "$remind_mid" "$remind_end" "$@")"
+
+        i=$(($remind_token_end+1))
+        remind_token_pre=$i
+        reminders_found=$(($reminders_found+1))
+    done
+
+    # Filter trailing characters not matched
+    remind_pre="${reminders:$remind_token_pre:$(($n-$remind_token_pre))}"
+    formatted_reminder="$formatted_reminder`$func "$remind_pre"`"
+
+    echo "$reminders_found;$formatted_reminder"
+}
+
+parse_future_date_in_reminder()
+{
+    remind_pre="$1"
+    remind_begin="$2"
+    remind_mid="$3"
+    remind_end="$4"
+
+    if [[ -z "$remind_begin" ]]; then
+        printf "$remind_pre"
+        return
+    fi
+
+    remind_mid_formatted="`parse_future_date "$remind_mid"`"
+
+    printf "$remind_pre$remind_begin$remind_mid_formatted$remind_end"
+}
+
+# Erase reminder token if younger than unix epoch seconds $5 but older or equal
+# to unix epoch seconds $6.
+erase_reminder_if_elapsed()
+{
+    remind_pre="$1"
+    remind_begin="$2"
+    remind_mid="$3"
+    remind_end="$4"
+    older_date="$5"
+    youngest_date="$6"
+
+    date_seconds="`date +%s --date="$remind_mid" 2> /dev/null`"
+    if [[ -n "$date_seconds" && \
+            "$date_seconds" -gt "$older_date" && \
+            "$date_seconds" -le "$youngest_date" ]]; then
+        printf "$remind_pre"
+    else
+        printf "$remind_pre$remind_begin$remind_mid$remind_end"
+    fi
+}
+
+# Erase reminder token from the provided input
+erase_reminder()
+{
+    remind_pre="$1"
+    remind_begin="$2"
+    remind_mid="$3"
+    remind_end="$4"
+
+    printf "$remind_pre"
+}
+
+# Given an input string $1, outputs "A;B" where A is the number of reminders
+# found, and B is the formatted version of the input string such that each
+# instance of "[remind datestring]" becomes
+# "[remind `parse_future_date "datestring"`]"
+format_reminder()
+{
+    for_each_reminder parse_future_date_in_reminder "$1"
+}
+
+# Given string $1 and search character $2, returns the index of the first
+# location of $2 in $1, or -1 if there is no match
+first_index_of()
+{
+    i=0
+    n=${#1}
+    while [[ $i -lt $n ]]; do
+        if [[ "${1:i:1}" = "$2" ]]; then
+            echo $i
+            return
+        fi
+        i=$((i+1))
+    done
+    echo -1
+}
+
+# Extracts reminders_found from format_reminder
+get_reminders_found()
+{
+    delim="`first_index_of "$1" ";"`"
+    echo "${1:0:$delim}"
+}
+
+# Extracts formatted_reminder from format_reminder
+get_formatted_reminder()
+{
+    delim="`first_index_of "$1" ";"`"
+    echo "${1:$(($delim+1))}"
+}
+
+# Similar to get_file_names_mtimes, however the output may include a
+# few older files due to rounding, and modification times have decimal points.
+get_file_names_mtimes_decimal_approx()
+{
+    oldest_mtime_seconds="$1"
+    shift
+    seconds_per_day=$(( 60 * 60 * 24 ))
+    current_time_seconds="`date +%s`"
+    max_mod_age_seconds=$(( $current_time_seconds - "$oldest_mtime_seconds" ))
+    # Max mtime, rounded up
+    max_mod_age_days=$(( $(( "$max_mod_age_seconds" / $seconds_per_day )) + 1 ))
+
+    while [[ -n "$1" ]]; do
+        file="$1"
+        shift
+        if [[ ! -e "$file" ]]; then
+            continue
+        fi
+        find "$file" \
+            -mtime -$max_mod_age_days \
+            -type f \
+            -not -regex ".*\.swp$" \
+            -not -regex ".*~$" \
+            -not -regex ".*#$" \
+            -not -regex ".*\.bak$" \
+            -printf %p'\n'%T@'\n'
+    done
+}
+
+# Given a Unix epoch modification time,
+# followed by any number of directory names, that may or may not exist,
+# gets file names and modification times separated by newlines,
+# whose modification time is more recent than the input time.
+# Odd entries are the files, with relative paths, excluding common undo/backup files.
+# Even entries are the modification times, in Epoch seconds, rounded down.
+get_file_names_mtimes()
+{
+    local oldest_mtime_seconds="$1"
+    shift
+    local file_names_mtimes_decimal="`get_file_names_mtimes_decimal_approx "$oldest_mtime_seconds" "$@"`"
+    OLDIFS=$IFS
+    IFS=$'\n'
+    local is_file=true
+    local file_names_mtimes=""
+    local file
+    local mtime
+    for entry in $file_names_mtimes_decimal; do
+        if $is_file; then
+            file="$entry"
+            is_file=false
+        else
+            # Round down to nearest whole number
+            mtime="${entry/.*/}"
+            if [[ "$mtime" -ge "$oldest_mtime_seconds" ]]; then
+                file_names_mtimes="$file_names_mtimes$file\n$mtime\n"
+            fi
+            is_file=true
+        fi
+    done
+    IFS=$OLDIFS
+    printf "$file_names_mtimes"
+}
+
+# Greps $1, a list of files and mtimes (newline separated),
+# to contain only those matching $2 .
+# If $3 is true, also update mtimes for each file.
+# Returns data in the form:
+# file_name_1
+# mtime_1
+# match_count_1
+# match_1_1
+# ...
+# match_1_n
+# file_name_2
+# mtime_2
+# ...
+grep_files_mtimes()
+{
+    local file_names_mtimes="$1"
+    local pattern="$2"
+    local update_mtimes="${3-false}"
+    OLDIFS=$IFS
+    IFS=$'\n'
+    local is_file=true
+    local file
+    local mtime
+    local grepped_file_mtimes=""
+    for entry in $file_names_mtimes; do
+        if $is_file; then
+            file="$entry"
+            is_file=false
+            continue
+        fi
+        is_file=true
+
+        mtime="$entry"
+        local grepped="`grep -rnEH "$pattern" "$file"`"
+        if [[ -z "$grepped" ]]; then
+            # Not a match
+            continue
+        fi
+        if "$update_mtimes"; then
+            mtime="`stat "$file" -c %Y`"
+        fi
+
+        grep_count=0
+        for grep in $grepped; do
+            grep_count=$(( $grep_count + 1 ))
+        done
+        grepped_file_mtimes="$grepped_file_mtimes$file\n$mtime\n$grep_count\n$grepped\n"
+    done
+    IFS=$OLDIFS
+    printf "$grepped_file_mtimes"
+}
+
+# Extract interleaved data in $1 from given indices in remaining args
+# line_type: 0=file, 1=mtime, 2=grepcount, 3=grepline
+splice_from_grepped()
+{
+    grepped_file_mtimes="$1"
+    shift
+    declare -a keep
+    while [[ -n "$1" ]]; do
+        keep[$1]=y;
+        shift
+    done
+    local line_type=0
+    local line_type_count=4
+    local greplines_remaining
+    local spliced=""
+    OLDIFS=$IFS
+    IFS=$'\n'
+    for entry in $grepped_file_mtimes; do
+        if [[ -n "${keep[$line_type]}" ]]; then
+            spliced="$spliced$entry\n"
+        fi
+        if [[ $line_type = 0 || $line_type = 1 ]]; then
+            # file, mtime
+            line_type=$(( $((line_type + 1)) % $line_type_count ))
+        elif [[ $line_type = 2 ]]; then
+            line_type=$(( $((line_type + 1)) % $line_type_count ))
+            greplines_remaining="$entry"
+        else
+            greplines_remaining=$(( "$greplines_remaining" - 1 ))
+            if [[ "$greplines_remaining" = 0 ]]; then
+                line_type=$(( $((line_type + 1)) % $line_type_count ))
+            fi
+        fi
+    done
+    IFS=$OLDIFS
+    printf "$spliced"
+}
+
+# Given matching data in format from grep_files_mtimes, returns the oldest mtime
+oldest_mtime_from_grepped()
+{
+    local oldest_mtime=""
+    local grepped_file_mtimes="$1"
+    local mtimes="`splice_from_grepped "$grepped_file_mtimes" 1`"
+    OLDIFS=$IFS
+    IFS=$'\n'
+    for mtime in $mtimes; do
+        if [[ -z "$oldest_mtime" || "$mtime" -lt "$oldest_mtime" ]]; then
+            oldest_mtime="$mtime"
+        fi
+    done
+    IFS=$OLDIFS
+    echo "$oldest_mtime"
+}
+
+# Given one or more lines of text representing elapsed reminders, notifies
+# the user of the reminder. For a single reminder, $1 is a single elapsed
+# reminder to be notified, and $2 is undefined. For bulk reminders, $1 is the
+# recommended notification toast message, and $2 is the newline-separated list
+# of all elapsed reminders.
+notify_reminders()
+{
+    custom_remind=".doremind"
+    if [[ -x "$custom_remind" ]]; then
+        ./$custom_remind "$1" "$2"
+        return
+    fi
+
+    echo -e $'\a'
+    if [[ -z "$2" ]]; then
+        echo "REMINDER: $1"
+        if [[ -n "`command -v notify-send`" ]]; then
+            notify-send "REMINDER: $1"
+        fi
+    else
+        OLDIFS=$IFS
+        IFS=$'\n'
+        for reminder in $2; do
+            echo "REMINDER: $reminder"
+        done
+        IFS=$OLDIFS
+        echo "$1"
+        if [[ -n "`command -v notify-send`" ]]; then
+            notify-send "$1"
+        fi
+    fi
+}
+
+# Given a list of reminder greps $1, notify reminders younger than unix epoch
+# seconds $2 but older or equal to unix epoch seconds $3 .
+notify_elapsed_reminders()
+{
+    local remind_lines="`splice_from_grepped "$1" 3`"
+    older_date="$2"
+    youngest_date="$3"
+    local max_distinct_reminders=2
+    local remind_count=0
+    local confirmed_remind_lines=""
+    OLDIFS=$IFS
+    IFS=$'\n'
+    for line in $remind_lines; do
+        local filtered_line="`for_each_reminder erase_reminder_if_elapsed "$line" "$older_date" "$youngest_date"`"
+        filtered_line="`get_formatted_reminder "$filtered_line"`"
+        if [[ "$filtered_line" != "$line" ]]; then
+            remind_count=$(( $remind_count + 1 ))
+            confirmed_remind_lines="$confirmed_remind_lines$filtered_line"$'\n'
+        fi
+    done
+    if [[ $remind_count -le "$max_distinct_reminders" ]]; then
+        for confirmed_remind_line in $confirmed_remind_lines; do
+            local notify_line="`for_each_reminder erase_reminder "$confirmed_remind_line"`"
+            notify_line="`get_formatted_reminder "$notify_line"`"
+            notify_reminders "$notify_line"
+        done
+    else
+        notify_reminders "$remind_count reminders have elapsed" "$confirmed_remind_lines"
+    fi
+    IFS=$OLDIFS
+}
+
+cache_file=".braindump/oldest_needing_remind_v1"
+remind_pattern="\[remind.*\]"
+# Given a list of input directories to check, get grepped files containing
+# reminders. Use a timestamp stored in a cache file to limit results.
+# NOTE: The modification time format used in the reminder code is in seconds
+# since the unix epoch, but for storage purposes, the cache file uses a more
+# human-readable time format.
+load_reminders()
+{
+    local oldest_mtime
+    if [[ -f "$cache_file" ]]; then
+        local cache_time="$(<.braindump/oldest_needing_remind_v1)"
+        oldest_mtime="`date --date="$cache_time" +%s 2> /dev/null`"
+    fi
+    if [[ -z "$oldest_mtime" ]]; then
+        oldest_mtime="`date --date=@0 +%s`"
+    fi
+    # Add some skew to the cache, to be more forgiving about time changes
+    local almost_now="`date --date="24 hours ago" +%s`"
+
+    local grepped_files_mtimes
+        local file_names_mtimes="`get_file_names_mtimes "$oldest_mtime" "$@"`"
+        grepped_files_mtimes="`grep_files_mtimes "$file_names_mtimes" "$remind_pattern"`"
+        unset file_names_mtimes
+
+    prev_oldest_mtime="$oldest_mtime"
+    if [[ -n "$grepped_files_mtimes" ]]; then
+        oldest_mtime="`oldest_mtime_from_grepped "$grepped_files_mtimes"`"
+    else
+        oldest_mtime="$almost_now"
+    fi
+
+    if [[ "$prev_oldest_mtime" != "$oldest_mtime" ]]; then
+        date --date=@"$oldest_mtime" > "$cache_file"
+    fi
+
+    printf "$grepped_files_mtimes"
+}
+
+declare -A reminders
+
+# Given a list of new remind greps, stores them in the global reminders
+# variable
+store_reminders()
+{
+    grepped_file_mtimes="$1"
+    shift
+    local line_type=0
+    local line_type_count=4
+    local greplines_remaining
+    local file
+    local reminder
+    OLDIFS=$IFS
+    IFS=$'\n'
+    for entry in $grepped_file_mtimes; do
+        if [[ $line_type = 0 ]]; then
+            if [[ -n "$reminder" ]]; then
+                # Store previous reminder
+                reminders["$file"]="$reminder"
+                reminder=""
+            fi
+            # file
+            file="$entry"
+            line_type=$(( $((line_type + 1)) % $line_type_count ))
+        elif [[ $line_type = 1 ]]; then
+            # mtime
+            line_type=$(( $((line_type + 1)) % $line_type_count ))
+        elif [[ $line_type = 2 ]]; then
+            # grepline count
+            line_type=$(( $((line_type + 1)) % $line_type_count ))
+            greplines_remaining="$entry"
+        else
+            # grepline
+            greplines_remaining=$(( "$greplines_remaining" - 1 ))
+            if [[ "$greplines_remaining" = 0 ]]; then
+                line_type=$(( $((line_type + 1)) % $line_type_count ))
+            fi
+        fi
+        reminder="$reminder$entry\n"
+    done
+    IFS=$OLDIFS
+    if [[ -n "$reminder" ]]; then
+        # Store last reminder
+        reminders["$file"]="$reminder"
+        reminder=""
+    fi
+}
+
+get_reminders()
+{
+    OLDIFS=$IFS
+    IFS=$'\n'
+    for reminder in "${reminders[@]}"; do
+        printf "$reminder"
+    done
+    IFS=$OLDIFS
+}
+
+# Given a list of input directories to check, sends reminder notifications
+run_remind_loop()
+{
+    # The order of reading and updating these variables is very important, to
+    # prevent redundant calculations without missing data.
+    local mtime_now="`date +%s`"
+    local mtime_then=0
+
+    echo "Loading reminders. This may take a while."
+    store_reminders "`load_reminders "$@"`"
+    echo "Done loading reminders."
+
+    echo "Remind loop is now running. Ctrl+C to cancel."
+    # Check for expired reminders and notify
+    notify_elapsed_reminders "`get_reminders`" $mtime_then $mtime_now
+    while true; do
+        mtime_then=$mtime_now
+        mtime_now="`date +%s`"
+
+        # Check for new reminders again and store them
+        local new_file_names_mtimes="`get_file_names_mtimes "$mtime_then" "$@"`"
+        local new_reminders="`grep_files_mtimes "$new_file_names_mtimes" "$remind_pattern"`"
+        store_reminders "$new_reminders"
+
+        # Check for expired reminders and notify
+        notify_elapsed_reminders "`get_reminders`" $mtime_then $mtime_now
+
+        sleep 10
+    done
+}
+
+
+
+mode=not_implemented
+
+if [[ "$1" = parse ]]; then
+    mode=parse
+    shift
+elif [[ "$1" = parsefile ]]; then
+    mode=parsefile
+    shift
+elif [[ "$1" = parse_future_date ]]; then
+    mode=parse_future_date
+    shift
+elif [[ -z "$1" ]]; then
+    mode=loop
+    shift
+fi
+
+if [[ "$mode" = parse || "$mode" = parsefile ]]; then
+    if [[ "$mode" = parse ]]; then
+        if [ -n "$1" ]; then
+            to_format="$1"
+        else
+            to_format="`cat /dev/stdin`"
+        fi
+    else
+        if [[ ! -f "$1" ]]; then
+            echo "File does not exist: \"$1\"" > /dev/stderr
+            exit 1
+        fi
+        to_format="`cat "$1"`"
+    fi
+
+    count_and_reminder="`format_reminder "$to_format"`"
+    reminders_found="`get_reminders_found "$count_and_reminder"`"
+    formatted="`get_formatted_reminder "$count_and_reminder"`"
+
+    if [[ "$mode" = parse ]]; then
+        echo "$formatted"
+    elif [[ "$reminders_found" = "0" ]]; then
+        echo "No reminders found"
+    else
+        echo "$formatted" > "$1"
+        word_reminder=reminders
+        if [[ $reminders_found == 1 ]]; then word_reminder=reminder; fi
+        echo "Formatted $reminders_found $word_reminder in file \"$1\""
+    fi
+elif [[ "$mode" = parse_future_date ]]; then
+    # A test mode to call parse_future_date directly
+    # This function is used by the parse and parsefile modes
+    # The output is similar to `date --date="$1"`
+    parse_future_date "$1"
+elif [[ "$mode" = loop ]]; then
+    run_remind_loop notes ideas tasks
+else
+    echo Not implemented
+fi
