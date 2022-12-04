@@ -7,6 +7,11 @@ mkdir -p .braindump
 
 
 
+get_unixdate() {
+    local future_date_input="$1"
+    date --date="$future_date_input" +%s 2> /dev/null
+}
+
 get_unixdate_if_future() {
     local future_date_input="$1"
     local future_date_seconds="`date --date="$future_date_input" +%s 2> /dev/null`"
@@ -48,7 +53,7 @@ parse_future_date_unix() {
     local has_timezone="`is_date_invalid "$future_date_input UTC"`"
     if $has_timezone; then
         # Date likely already formatted
-        echo "$original_future_date_seconds"
+        get_unixdate "$future_date_input"
         return
     fi
 
@@ -61,7 +66,7 @@ parse_future_date_unix() {
             return
         else
             # Give up
-            echo "$original_future_date_seconds"
+            get_unixdate "$future_date_input"
             return
         fi
     fi
@@ -75,13 +80,13 @@ parse_future_date_unix() {
             return
         else
             # Give up
-            echo "$original_future_date_seconds"
+            get_unixdate "$future_date_input"
             return
         fi
     fi
 
     # Give up
-    echo "$original_future_date_seconds"
+    get_unixdate "$future_date_input"
 }
 
 parse_future_date()
@@ -619,12 +624,17 @@ mode=not_implemented
 if [[ "$1" = parse ]]; then
     mode=parse
     shift
+elif [[ "$1" = "me" ]]; then
+    mode=new_reminder
+    shift
 elif [[ "$1" = parse_future_date ]]; then
     mode=parse_future_date
     shift
 elif [[ -z "$1" ]]; then
     mode=loop
     shift
+else
+    mode=new_reminder
 fi
 
 if [[ "$mode" = parse ]]; then
@@ -638,6 +648,43 @@ if [[ "$mode" = parse ]]; then
     formatted="`get_formatted_reminder "$count_and_reminder"`"
 
     echo "$formatted"
+elif [[ "$mode" = new_reminder ]]; then
+    remind_message_text="$1"
+    remind_date_raw="$2"
+
+    while [[ -z "$remind_message_text" ]]; do
+        printf "remind me: "
+        read remind_message_text
+    done
+    if [[ "${#remind_message_text}" -lt 20 ]]; then
+        remind_message_text_abridged="$remind_message_text"
+    else
+        remind_message_text_abridged="${remind_message_text:0:17}..."
+    fi
+
+    date_confirmed_yn=""
+    first_date_confirm=true
+    while [[ "$date_confirmed_yn" != "y" ]]; do
+        if $first_date_confirm; then
+            first_date_confirm=false
+        else
+            printf "$remind_message_text_abridged at: "
+            read remind_date_raw
+        fi
+        if [[ -n "$remind_date_raw" ]]; then
+            remind_date="`parse_future_date "$remind_date_raw" 2> /dev/null`"
+            if [[ !("$remind_date" =~ invalid) ]]; then
+                printf "$remind_date? (y/n)?: "
+                read date_confirmed_yn
+            else
+                echo "Cannot read time format: \""$remind_date_raw"\"."
+            fi
+        fi
+    done
+
+    remind_file="`./task remind ?`"
+    echo "$remind_message_text [remind $remind_date]" >> "$remind_file"
+    echo "Added reminder: \"$remind_message_text\" to file: \"$remind_file\""
 elif [[ "$mode" = parse_future_date ]]; then
     # A test mode to call parse_future_date directly
     # This function is used by the parse and parsefile modes
