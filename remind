@@ -671,7 +671,13 @@ elif [[ "$mode" = new_reminder ]]; then
     remind_message_text="$1"
     remind_date_raw="$2"
 
+    blank_messages_until_bail=5
     while [[ -z "$remind_message_text" ]]; do
+        if [[ "$blank_messages_until_bail" = 0 ]]; then
+            echo "Error: No reminder message provided"
+            exit 1
+        fi
+        blank_messages_until_bail=$(($blank_messages_until_bail - 1))
         printf "remind me: "
         read remind_message_text
     done
@@ -683,6 +689,7 @@ elif [[ "$mode" = new_reminder ]]; then
 
     date_confirmed_yn=""
     first_date_confirm=true
+    blank_messages_until_bail=5
     while [[ "$date_confirmed_yn" != "y" ]]; do
         if $first_date_confirm; then
             first_date_confirm=false
@@ -698,6 +705,12 @@ elif [[ "$mode" = new_reminder ]]; then
             else
                 echo "Cannot read time format: \""$remind_date_raw"\"."
             fi
+        else
+            if [[ "$blank_messages_until_bail" = 0 ]]; then
+                echo "Error: No reminder time provided"
+                exit 1
+            fi
+            blank_messages_until_bail=$(($blank_messages_until_bail - 1))
         fi
     done
 
