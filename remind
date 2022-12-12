@@ -71,6 +71,25 @@ parse_future_date_unix() {
         fi
     fi
 
+    local has_week
+    if [[ "$future_date_input" =~ (sun|mon|tue|wed|thu|fri|sat) ]]; then
+        has_week=true
+    else
+        has_week=false
+    fi
+    if $has_week; then
+        # Try next week
+        future_date_seconds="`get_unixdate_if_future "$future_date_input next week"`"
+        if [[ "$future_date_seconds" != invalid && "$future_date_seconds" != past ]]; then
+            echo "$future_date_seconds"
+            return
+        else
+            # Give up
+            get_unixdate "$future_date_input"
+            return
+        fi
+    fi
+
     local has_hour="`is_date_invalid "$future_date_input 12am"`"
     if $has_hour; then
         # Try next day
