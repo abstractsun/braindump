@@ -10,17 +10,17 @@ If you were looking for the next groundbreaking productivity/collaboration suite
 
 - Has various commands for opening files to write in
 - When opening a file, jumps to the important line
-- `./triage` semi-automates the note/idea review process
+- Has various commands for parsing files for later review
 
 ## Ingredients
 
-Currently, to run most braindump scripts, you'll need bash, GNU find, and some other standard utilities available on your `$PATH`.
+To run most braindump scripts, you'll need bash, GNU find, and some other standard utilities available on your `$PATH`.
 
-Braindump uses nano by default for text editing. See the "Other tricks" section for how to select the text editor.
+The default text editor is nano, but vim provides the best experience. By default, all files are suffixed with `.txt`. To change these defaults, export the environment variables `$EDITOR` and `$BRAINDUMP_FILE_SUFFIX`.
 
 ## The commands
 
-All commands currently assume you stay in the same folder.
+All commands assume you stay in the same folder.
 
 - `./note` - Edits/appends a note for the current day
     - Variant: `./note "NOTE_MSG"`
@@ -34,6 +34,8 @@ All commands currently assume you stay in the same folder.
 - `./task TASKNAME` - Opens the named task
     - You can write `[START]` in a task file to mark where you left off
     - Variant: `./task` - Opens the tasks folder (if possible)
+- `./remind` - Periodically checks for lines containing `[remind DATETIME]` in tasks, notes, ideas, and logs; and shows messages when reminders expire
+    - `./remind me` and `./remind parse` allow for creating reminders interactively or inside your text editor
 - `./log LOGNAME` - Opens the named log, appends a timestamp, and (if using vim) enters insert mode after the timestamp
 - `./pin` - Displays lines in notes/ideas/tasks containing `[PIN]`
 - `./tag TAGNAME` - Displays lines in notes/ideas containing `{TAGNAME}`, as well as the immediately preceding lines
@@ -43,39 +45,81 @@ All commands currently assume you stay in the same folder.
 - `./qr "QR_MSG"` - A wrapper for [qrencode](https://fukuchi.org/works/qrencode/index.html.en) that displays a qr image which encodes the provided `QR_MSG`
     - Variant: `./qr` - Reads from stdin
 
+## Reminders
+
+To use the `./remind` script, you'll need GNU date, GNU find, bash, and some other standard utilities available on your `$PATH`.
+
+All commands assume you stay in the same folder.
+
+- `./remind` - Periodically checks for lines containing `[remind DATETIME]` in tasks, notes, ideas, and logs; and shows messages when reminders expire
+- `./remind me` - Adds a reminder
+    - Variants: `./remind me "REMINDER"`, `./remind me "REMINDER" "REMIND_TIME"`
+- `./remind parse` - Parses a line containing a reminder from stdin to stdout, for use in your text editor
+    - Variant: `./remind parse "REMIND_TEXT [remind DATETIME] ..."
+
+Remind times can be in plain English or in machine format, relative or absolute. The script tries to select future dates when possible.
+
+To remove expired reminders, remove the expired `[remind DATETIME]` from the reminder file, or alternatively clobber the reminder, for example, `[.remind DATETIME]`
+
+If you are using vim, you can create reminders inside files as you type using `./remind parse`:
+
+```plaintext
+Did the thing finally happen? [remind 6 months 8pm]
+Do absolutely nothing for 5 minutes [remind tomorrow 12pm] [remind 2 days 12pm]
+```
+
+Select one or more lines containing new reminders and type `:!./remind parse`. Please note that `./remind` does not handle periodic reminders. All reminders must be converted to an absolute format in order to work correctly.
+
+### Reminder script
+
+By default, `./remind` prints reminders to the terminal and echoes a visual bell. On some systems, it will also display a notification.
+
+You can override this behavior by creating a script file called `.doremind`, which will be called by `./remind`. The `.doremind` script will be given one or two arguments as input. For a single reminder, `$1` is a single elapsed reminder to be notified, and `$2` is undefined. For bulk reminders, `$1` is the recommended notification toast message, and `$2` is the newline-separated list of all elapsed reminders.
+
+## Tasks and logs continued
+
+Files in the `tasks/archived` and `logs/archived` subdirectories are ignored by `./task` and `./log`, allowing the creation of new task/log files with the same names
+
+When opening a task file in vim, `:loadview` is invoked to load the existing vim view if it exists. This is useful when the view contains folded lines. Alternatively, you can use modelines.
+
 ## Other tricks
 
-- To select the text editor that braindump uses, export an environment variable (`$BRAINDUMP_EDITOR`, `$VISUAL`, or `$EDITOR`)
-    - `$BRAINDUMP_EDITOR` gets highest priority and can safely accept command line parameters
-    - The default text editor is nano, which is is simple and easy to use
-    - vim provides the best experience
-    - You may also prefer to change the file type by setting `$BRAINDUMP_FILE_SUFFIX`. Its default value is `.txt`
-- Files in the `tasks/archived` and `logs/archived` subdirectories are ignored, allowing the creation of new task/log files with the same names
-- When opening a task file in vim, `:loadview` is invoked to load the existing vim view if it exists. This is useful when the view contains folded lines
-- In a bash command line (and some others), you can quickly jump to/from the braindump folder by setting an alias:
-    ```bash
-    # Set this in your init file (`~/.bashrc`, `~/.bash_profile`, etc)
-    alias bd='pushd /path/to/my_braindump'
-    # Jump to notes folder
-    bd
-    # Write some notes...
-    ./todo "Follow up on thing"
-    # Return to previous folder
-    popd
+### Parallel notes
+
+You can make your note and idea files have different names in different situations by creating an executable called `.getdesc` which returns a descriptive name.
+
+For example, if you are creating notes at home, your `.getdesc` file could look like this:
+
+```bash
+#!/bin/bash
+echo "home"
+```
+
+Then, `./note` would create notes that look like: "notes/note_home_YYYY-MM-DD.txt"
+
+### Command composition
+
+- Adding "?" to the end of some commands which would otherwise open a file will instead print the name of the file.
+- This works for `./note`, `./idea`, `./todo`, `./task TASKNAME`, `./log LOGNAME`, `./queue`, and `./scratch`
+- This can be used in vim to open another braindump file in a separate buffer without using termcap, for example:
+    ```vim
+    :split `./note ?`
     ```
-- Adding "?" to the end of some commands which would otherwise open a file will instead print the name of the file
-    - This works for `./note`, `./idea`, `./todo`, `./task [TASKNAME]`, `./log [LOGNAME]`, `./queue`, and `./scratch`
-    - This can be used in vim to open another braindump file in a separate buffer without using termcap, for example:
-        ```vim
-        :split `./note ?`
-        ```
-- You can make your note and idea files have different names in different situations by creating an executable called `.getdesc` which returns a descriptive name.
-    - For example, if you are creating notes at home, your `.getdesc` file could look like this:
-        ```bash
-        #!/bin/bash
-        echo "home"
-        ```
-      Then, `./note` would create notes that look like: "notes/note_home_YYYY-MM-DD.txt"
+
+## Quick note
+
+In a bash command line (and some others), you can quickly jump to/from the braindump folder by setting an alias:
+
+```bash
+# Set this in your init file (`~/.bashrc`, `~/.bash_profile`, etc)
+alias bd='pushd /path/to/my_braindump'
+# Jump to notes folder
+bd
+# Write some notes...
+./todo "Follow up on thing"
+# Return to previous folder
+popd
+```
 
 ## License
 
@@ -88,7 +132,7 @@ I don't use braindump for everything. Here are a few other tools I've found usef
 - [Fossil](https://fossil-scm.org/) - It's a code forge, issue tracker, wiki, forum, and more, in a single sub-10 megabyte executable. Trivial to back up and sync. Customizable if you know a bit of HTML/SQL.
 - [Krita](https://krita.org/) - Drawing/painting program. Especially satisfying with a drawing tablet/touch interface.
 - [Markdeep](https://casual-effects.com/markdeep/) - Turn a markdown file into a webpage by just downloading a script and adding a js include to it at the bottom of your file. Lots of bells and whistles.
-- To be honest, I still use instant messaging on occasion, or a graphical text editor. It's more convenient in certain situations.
+- To be honest, I still use email or instant messaging on occasion, or a graphical text editor. It's more convenient in certain situations.
 
 A grad student I used to work with once said to me, "Keep a Gedankenlog." I still think about that.
 
