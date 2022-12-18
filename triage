@@ -82,7 +82,7 @@ NEED_TRIAGE_COUNT=0
 for file in $ALL; do
     ALL_CHECKED_FILES_COUNT=$(($ALL_CHECKED_FILES_COUNT + 1))
     if [ -z "$(tail -n 1 $file | grep "^\[TRIAGE\]\s*$")" ]; then
-        NEEDING_TRIAGE+="$(printf "\n${file}")"
+        NEEDING_TRIAGE+=$'\n'"$file"
 	NEED_TRIAGE_COUNT=$(($NEED_TRIAGE_COUNT + 1))
         if $ENABLE_TRIAGE_CACHE; then
             THIS_NEEDING_TRIAGE_TIMESTAMP="$(date -d "$(stat $file -c %y)")"
