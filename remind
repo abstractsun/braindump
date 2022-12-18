@@ -700,8 +700,17 @@ elif [[ "$mode" = new_reminder ]]; then
         if [[ -n "$remind_date_raw" ]]; then
             remind_date="`parse_future_date "$remind_date_raw" 2> /dev/null`"
             if [[ !("$remind_date" =~ invalid) ]]; then
-                printf "$remind_date? (y/n)?: "
-                read date_confirmed_yn
+                date_confirmed_yn=""
+                blank_messages_until_bail=5
+                while [[ -z "$date_confirmed_yn" ]]; do
+                    if [[ "$blank_messages_until_bail" = 0 ]]; then
+                        echo "Error: No reminder time provided"
+                        exit 1
+                    fi
+                    blank_messages_until_bail=$(($blank_messages_until_bail - 1))
+                    printf "$remind_date? (y/n)?: "
+                    read date_confirmed_yn
+                done
             else
                 echo "Cannot read time format: \""$remind_date_raw"\"."
             fi
