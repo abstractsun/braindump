@@ -482,7 +482,7 @@ notify_elapsed_reminders()
     local remind_lines="`splice_from_grepped "$1" 3`"
     older_date="$2"
     youngest_date="$3"
-    local max_distinct_reminders=2
+    local max_distinct_reminders=1
     local remind_count=0
     local confirmed_remind_lines=""
     OLDIFS=$IFS
