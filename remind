@@ -732,7 +732,7 @@ elif [[ "$mode" = parse_future_date ]]; then
     # The output is similar to `date --date="$1"`
     parse_future_date "$1"
 elif [[ "$mode" = loop ]]; then
-    run_remind_loop notes ideas tasks
+    run_remind_loop notes ideas tasks logs
 else
     echo Not implemented
 fi
