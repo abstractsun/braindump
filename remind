@@ -192,13 +192,13 @@ parse_future_date_in_reminder()
     remind_end="$4"
 
     if [[ -z "$remind_begin" ]]; then
-        printf "$remind_pre"
+        echo -n "$remind_pre"
         return
     fi
 
     remind_mid_formatted="`parse_future_date "$remind_mid"`"
 
-    printf "$remind_pre$remind_begin$remind_mid_formatted$remind_end"
+    echo -n "$remind_pre$remind_begin$remind_mid_formatted$remind_end"
 }
 
 # Erase reminder token if younger than unix epoch seconds $5 but older or equal
@@ -216,9 +216,9 @@ erase_reminder_if_elapsed()
     if [[ -n "$date_seconds" && \
             "$date_seconds" -gt "$older_date" && \
             "$date_seconds" -le "$youngest_date" ]]; then
-        printf "$remind_pre"
+        echo -n "$remind_pre"
     else
-        printf "$remind_pre$remind_begin$remind_mid$remind_end"
+        echo -n "$remind_pre$remind_begin$remind_mid$remind_end"
     fi
 }
 
@@ -230,7 +230,7 @@ erase_reminder()
     remind_mid="$3"
     remind_end="$4"
 
-    printf "$remind_pre"
+    echo -n "$remind_pre"
 }
 
 # Given an input string $1, outputs "A;B" where A is the number of reminders
@@ -326,13 +326,13 @@ get_file_names_mtimes()
             # Round down to nearest whole number
             mtime="${entry/.*/}"
             if [[ "$mtime" -ge "$oldest_mtime_seconds" ]]; then
-                file_names_mtimes="$file_names_mtimes$file\n$mtime\n"
+                file_names_mtimes="$file_names_mtimes$file"$'\n'"$mtime"$'\n'
             fi
             is_file=true
         fi
     done
     IFS=$OLDIFS
-    printf "$file_names_mtimes"
+    echo -n "$file_names_mtimes"
 }
 
 # Greps $1, a list of files and mtimes (newline separated),
@@ -381,10 +381,10 @@ grep_files_mtimes()
         for grep in $grepped; do
             grep_count=$(( $grep_count + 1 ))
         done
-        grepped_file_mtimes="$grepped_file_mtimes$file\n$mtime\n$grep_count\n$grepped\n"
+        grepped_file_mtimes="$grepped_file_mtimes$file"$'\n'"$mtime"$'\n'"$grep_count"$'\n'"$grepped"$'\n'""
     done
     IFS=$OLDIFS
-    printf "$grepped_file_mtimes"
+    echo -n "$grepped_file_mtimes"
 }
 
 # Extract interleaved data in $1 from given indices in remaining args
@@ -406,7 +406,7 @@ splice_from_grepped()
     IFS=$'\n'
     for entry in $grepped_file_mtimes; do
         if [[ -n "${keep[$line_type]}" ]]; then
-            spliced="$spliced$entry\n"
+            spliced="$spliced$entry"$'\n'
         fi
         if [[ $line_type = 0 || $line_type = 1 ]]; then
             # file, mtime
@@ -422,7 +422,7 @@ splice_from_grepped()
         fi
     done
     IFS=$OLDIFS
-    printf "$spliced"
+    echo -n "$spliced"
 }
 
 # Given matching data in format from grep_files_mtimes, returns the oldest mtime
@@ -543,7 +543,7 @@ load_reminders()
         date --date=@"$oldest_mtime" > "$cache_file"
     fi
 
-    printf "$grepped_files_mtimes"
+    echo -n "$grepped_files_mtimes"
 }
 
 declare -A reminders
@@ -585,7 +585,7 @@ store_reminders()
                 line_type=$(( $((line_type + 1)) % $line_type_count ))
             fi
         fi
-        reminder="$reminder$entry\n"
+        reminder="$reminder$entry"$'\n'
     done
     IFS=$OLDIFS
     if [[ -n "$reminder" ]]; then
@@ -600,7 +600,7 @@ get_reminders()
     OLDIFS=$IFS
     IFS=$'\n'
     for reminder in "${reminders[@]}"; do
-        printf "$reminder"
+        echo -n "$reminder"
     done
     IFS=$OLDIFS
 }
@@ -678,7 +678,7 @@ elif [[ "$mode" = new_reminder ]]; then
             exit 1
         fi
         blank_messages_until_bail=$(($blank_messages_until_bail - 1))
-        printf "remind me: "
+        echo -n "remind me: "
         read remind_message_text
     done
     if [[ "${#remind_message_text}" -lt 20 ]]; then
@@ -694,7 +694,7 @@ elif [[ "$mode" = new_reminder ]]; then
         if $first_date_confirm; then
             first_date_confirm=false
         else
-            printf "$remind_message_text_abridged at: "
+            echo -n "$remind_message_text_abridged at: "
             read remind_date_raw
         fi
         if [[ -n "$remind_date_raw" ]]; then
@@ -708,7 +708,7 @@ elif [[ "$mode" = new_reminder ]]; then
                         exit 1
                     fi
                     blank_messages_until_bail=$(($blank_messages_until_bail - 1))
-                    printf "$remind_date? (y/n)?: "
+                    echo -n "$remind_date? (y/n)?: "
                     read date_confirmed_yn
                 done
             else
