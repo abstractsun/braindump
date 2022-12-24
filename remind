@@ -660,7 +660,7 @@ if [[ "$mode" = parse ]]; then
     if [ -n "$1" ]; then
         to_format="$1"
     else
-        to_format="`cat /dev/stdin`"
+        to_format="`cat -`"
     fi
 
     count_and_reminder="`format_reminder "$to_format"`"

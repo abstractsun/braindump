@@ -10,7 +10,7 @@ fi
 
 TOQR="$1"
 if [[ -z "$TOQR" ]]; then
-    TOQR="$(cat /dev/stdin)"
+    TOQR="$(cat -)"
 fi
 
 
