@@ -7,6 +7,9 @@ mkdir -p .braindump
 
 
 
+# Custom date format to avoid issues with locales providing ambiguous dates
+DATE_FORMAT="+%a %b %e %T %Z %Y"
+
 get_unixdate() {
     local future_date_input="$1"
     date --date="$future_date_input" +%s 2> /dev/null
@@ -112,7 +115,7 @@ parse_future_date()
 {
     local future_date_unix="`parse_future_date_unix "$1"`"
     # future_date_unix may be an invalid date, in which case just return the invalid value instead 
-    future_date="`date --date="@$future_date_unix" 2> /dev/null`"
+    future_date="`date "$DATE_FORMAT" --date="@$future_date_unix" 2> /dev/null`"
     if [[ -n "$future_date" ]]; then
         echo "$future_date"
     else
