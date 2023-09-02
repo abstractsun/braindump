@@ -71,7 +71,7 @@ All commands assume you stay in the same folder.
 - `./remind me` - Adds a reminder interactively
     - Variants: `./remind me "REMINDER"`, `./remind me "REMINDER" "REMIND_TIME"`
 - `./remind parse` - Parses a line containing a reminder from stdin to stdout, for use in your text editor
-    - Variant: `./remind parse "REMIND_TEXT [remind DATETIME] ..."
+    - Variant: `./remind parse "REMIND_TEXT [remind DATETIME] ..."`
 
 Remind times can be in plain English or in machine format, relative or absolute. The script tries to select future dates when possible.
 
