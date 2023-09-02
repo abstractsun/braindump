@@ -53,7 +53,7 @@ Files in `tasks/archived` and `logs/archived` are ignored by `./task` and `./log
 
 `./queue` and `./scratch` each edit a hidden file. Alternatively, use `./queue "QUEUE_MSG" to append to the queue file.
 
-# Triage and review
+## Triage and review
 
 `./triage` reviews the TODO file, as well as any files in `notes/` and `ideas/` which are not fully reviewed. You can write `[TRIAGE]` in a file in `notes/` or `ideas/` to mark where you left off. In those same folders, files with `[TRIAGE]` as the last line are ignored. They are considered fully reviewed.
 
