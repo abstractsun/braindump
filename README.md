@@ -111,6 +111,10 @@ This can be used in vim to open a file in a separate buffer without using termca
 :split `./note ?`
 ```
 
+## Advanced scripts
+
+- `./scripts/dateify [FILE_OR_FOLDER] ...` - Given one or more files or folders, interactively asks to add dates to file names.
+
 ## Customization
 
 ### Environment variables
