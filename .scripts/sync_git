@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+# braindump
+# (c) abstractsun
+# License: GPL version 2 or, at your option, any later version if it's legal to do that (git's license is currently GPLv2 FYI (as of 2023-08))
+
+# ###############
+# abstractsun's asynchronous git syncing script. There be dragons! 🐉
+# ###############
+
+# This git syncing script can save your work, do syncing, and octopus merges into a target branch.
+# It assumes one remote.
+# The script was designed for use with multiple git branches, with infrequent syncs, and it only syncs specific folders. One could also use this script for a single-branch workflow, but in that case you may prefer a more automatic and/or general purpose syncing solution.
+
+# Typical setup ./.sync file:
+#     #!/usr/bin/env bash
+#     BRAINDUMP_GIT_REMOTE="origin" # Or your origin of choice
+#     source .scripts/sync_git
+# It is recommended to create a ./.getdesc file, to reduce merge conflicts.
+# The example ./.getdesc below works well when each computer has its own branch:
+#     #!/usr/bin/env bash
+#     if [[ -d ".git" && -n "$(command -v sed)" ]]; then
+#         GIT_DESC="$(git branch --show-current | sed "s/\//_/g")"
+#         echo "$GIT_DESC"
+#     fi
+
+# ./sync local - Saves your work
+# ./sync - Saves your work and syncs
+# ./sync into [TARGET_BRANCH] - Does an octopus merge into [TARGET_BRANCH]. You are responsible for resolving merge conflicts, pushing merged branches, and switching back to your usual branch. This assumes each computer has its own branch, plus there's a separate target branch to merge all changes into.
+
+# ###############
+# Random tips
+# ###############
+
+# Adding/removing remote tracking branches HOWTO (used for naming merges (so you don't see the URL in the merge message) and this sync script's octopus merging)
+#     git branch -dr [OLD_REMOTE_NAME]/[BRANCH]
+#     git remote set-branches --add [NEW_REMOTE_NAME] [BRANCH]
+#     git fetch
+
+# ###############
+# END DOCUMENTATION
+# ###############
+
+export MODE=$1;
+export SYNCED=0;
+
+if [[ -n "$BRAINDUMP_GIT_REMOTE" ]]; then
+    GIT_REMOTE="$BRAINDUMP_GIT_REMOTE"
+else
+    GIT_REMOTE="origin"
+fi
+
+# Special mode
+if [[ $MODE == into ]]; then
+    if [[ -n "$(git status --porcelain=1 | grep -E "^fatal")" ]]; then
+        echo "Not a git repository"
+        exit 1
+    fi
+    if [ -n "$(git status --porcelain=1 -uno | grep -E "^A")" ]; then
+        echo "Uncommitted changes exist; aborting"
+        exit 1
+    fi
+    MERGEBRANCH=$2
+    if [[ -z $MERGEBRANCH ]]; then
+        echo "Must specify branch to merge into as next positional argument"
+        exit 1
+    fi
+    if [[ -z "$(git branch -a --format %\(refname\) | grep -E "^refs/heads/${MERGEBRANCH}$")" ]]; then
+    echo "INTO"
+        echo "Can't merge into branch '${MERGEBRANCH}' because it does not exist as a local branch"
+        exit 1
+    fi
+    STARTBRANCH="$(git branch --show-current)"
+    REMOTEBRANCHES=$(git branch -a --format "%(refname)" | grep -E "^refs/remotes/$GIT_REMOTE" | grep -Ev "^refs/remotes/$GIT_REMOTE/$MERGEBRANCH$" | grep -Ev "^refs/remotes/$GIT_REMOTE/$STARTBRANCH$" | sed "s/^refs\/remotes\///g")
+    REMOTEBRANCHARGS=""
+    for branch in $REMOTEBRANCHES; do
+        REMOTEBRANCHARGS+=" $branch"
+    done
+    echo "Remotes: $REMOTEBRANCHARGS"
+
+    git checkout $MERGEBRANCH &&
+        git pull . $STARTBRANCH ${REMOTEBRANCHARGS} &&
+        git status
+
+    exit
+fi;
+
+
+if [[ $MODE != local ]]; then
+    git fetch "$GIT_REMOTE" &&
+    git pull --ff-only &&
+    SYNCED=1
+fi;
+
+if [ -n "$(git status --porcelain=1 -uno | grep -E "^A")" ]; then
+    git commit -m "Temp commit" &&
+    SYNCED=1
+fi;
+if [ -n "$(git status --porcelain=1 notes)" ]; then
+    git add notes &&
+    git commit -m "Add notes $(date +%Y-%m-%d)" &&
+    SYNCED=1
+fi;
+if [ -n "$(git status --porcelain=1 ideas)" ]; then
+    git add ideas &&
+    git commit -m "Add ideas $(date +%Y-%m-%d)" &&
+    SYNCED=1
+fi;
+if [ -n "$(git status --porcelain=1 tasks)" ]; then
+    git add tasks &&
+    git commit -m "Add tasks/todo $(date +%Y-%m-%d)" &&
+    SYNCED=1
+fi;
+
+if [ -n "$(git status --porcelain=1 logs)" ]; then
+    git add logs &&
+    git commit -m "Add logs $(date +%Y-%m-%d)" &&
+    SYNCED=1
+fi;
+
+if [[ $MODE != local ]]; then
+    git push &&
+    SYNCED=1
+fi;
+
+if [[ $SYNCED == 0 ]]; then
+    if [[ $MODE != local ]]; then
+        echo "Nothing to sync";
+    else
+        echo "Nothing to sync locally";
+    fi;
+fi;

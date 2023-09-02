@@ -31,6 +31,7 @@ idea  ideas  log  logs  note  notes  pin  qr  queue  remind  scratch  tag  task 
 - **Special files:** `./task TASKNAME`, `./log LOGNAME`, `./queue`, and `./scratch` are used to write things down that are reviewed manually
 - **Triage, review, and reminders:** `./triage`, `./remind`, `./pin`, and `./tag TAGNAME` can be used to review and search through files in different ways
 - **Utility commands:** `./remind parse`, `./qr`, and `?` (command suffix) allow for integrating the commands with the shell or your text editor, or you can just use `?` to query the location of a file.
+- **Advanced commands:** Various commands in `./.scripts`, hidden for various reasons. See the "Advanced commands" section.
 
 ## Reviewable files
 
@@ -111,9 +112,12 @@ This can be used in vim to open a file in a separate buffer without using termca
 :split `./note ?`
 ```
 
-## Advanced scripts
+## Advanced commands
 
-- `./scripts/dateify [FILE_OR_FOLDER] ...` - Given one or more files or folders, interactively asks to add dates to file names.
+Advanced commands are in the `./.scripts` folder. Some are for internal purposes. These ones can be invoked as standalone commands:
+
+- `./.scripts/dateify [FILE_OR_FOLDER] ...` - Given one or more files or folders, interactively asks to add dates to file names.
+- ` ./.scripts/sync_git`  - Opinionated git syncing script, invoked manually. See the source file for documentation.
 
 ## Customization
 
@@ -142,7 +146,7 @@ popd
 
 Regardless of how you sync your files, it is strongly encouraged to exclude the `.braindump/` folder from syncing. Otherwise, some commands may stop working correctly.
 
-`./sync` is an, "unreserved word." Use it for your syncing script of choice if you wish.
+`./sync` is an, "unreserved word." Use it for your syncing script of choice if you wish. (Alternatively, see the "Advanced commands" section)
 
 ### Parallel notes
 
@@ -165,7 +169,11 @@ You can override this behavior by creating a script file called `.doremind`, whi
 
 ## License
 
-[GPL version 3](https://www.gnu.org/licenses/gpl-3.0.html), or, at your option, any later version
+With a few exceptions, braindump is licensed under [GPL version 3](https://www.gnu.org/licenses/gpl-3.0.html), or, at your option, any later version.
+
+The following files are under different licenses. See their respective source files:
+
+- `./.scripts/sync_git`
 
 ## See also
 
