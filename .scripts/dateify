@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+if [[ -z "$1" ]]; then
+    echo Please provide one or more files/folders > /dev/stderr
+    exit 1
+fi
+
+maybe_rename_file() {
+    FILE="$1"
+    FILE_BIRTH="`stat $1 --format=%W`"
+    if [[ "$FILE_BIRTH" == 0 ]]; then
+        FILE_BIRTH="`date +%s`"
+    fi
+
+    FILE_DIR="`dirname $1`"
+    FILE_NAME="`basename $1`"
+    FILE_NAME_BASE="${FILE_NAME%%.*}"
+    FILE_NAME_EXTENSION="${FILE_NAME##$FILE_NAME_BASE}"
+
+    NEW_FILE_NAME_BASE="$FILE_NAME_BASE"_`date --date=@$FILE_BIRTH -Id`
+
+    NEW_FILE="$FILE_DIR/$NEW_FILE_NAME_BASE$FILE_NAME_EXTENSION"
+
+    # TODO: Date should be based on stat creation date, not current date
+    RES=""
+    while [[ -z "$RES" ]]; do
+        echo -n "Rename file '$FILE' to '$NEW_FILE'? (y/n): " > /dev/stderr
+        read RES
+        if [[ "$RES" == "y" ]]; then
+            mv -v "$FILE" "$NEW_FILE"
+        elif [[ "$RES" != "n" ]]; then
+            RES=""
+        fi
+    done
+}
+
+NONE=true
+for QUERY in "$@"; do
+    OLDIFS="$IFS"
+    IFS=$'\n'
+
+    # Find all files that do not have a date in the form YYYY-MM-DD (where - can be any character except a path separator)
+    # Ignore undo files
+    FILES="`find "$QUERY" -type f -not -regex ".*[0-9][0-9][0-9][0-9][^/][0-9][0-9][^/][0-9][0-9][^/]*$" \
+        -not -regex ".*~$" \
+        -not -regex ".*\.bak$" \
+        -not -regex ".*#$" \
+        -not -regex ".*\.swp$"`"
+    for FILE in $FILES; do
+        if [[ -z "$FILE" ]]; then
+            continue
+        fi
+        NONE=false
+        maybe_rename_file "$FILE"
+    done
+
+    IFS="$OLDIFS"
+done
+
+if $NONE; then
+    echo No undated files found > /dev/stderr
+fi
