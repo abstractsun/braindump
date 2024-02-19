@@ -86,8 +86,9 @@ fi;
 
 
 if [[ $MODE != local ]]; then
+    CURRENT_BRANCH="$(git branch --show-current)"
     git fetch "$GIT_REMOTE" &&
-    git pull --ff-only &&
+    git pull "$GIT_REMOTE" "$CURRENT_BRANCH" --ff-only &&
     SYNCED=1
 fi;
 
@@ -118,7 +119,7 @@ if [ -n "$(git status --porcelain=1 logs)" ]; then
 fi;
 
 if [[ $MODE != local ]]; then
-    git push &&
+    git push "$GIT_REMOTE" "$CURRENT_BRANCH" &&
     SYNCED=1
 fi;
 
