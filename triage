@@ -83,24 +83,25 @@ for file in $ALL; do
     ALL_CHECKED_FILES_COUNT=$(($ALL_CHECKED_FILES_COUNT + 1))
     if [ -z "$(tail -n 1 $file | grep "^\[TRIAGE\]\s*$")" ]; then
         NEEDING_TRIAGE+=$'\n'"$file"
-	NEED_TRIAGE_COUNT=$(($NEED_TRIAGE_COUNT + 1))
+        NEED_TRIAGE_COUNT=$(($NEED_TRIAGE_COUNT + 1))
         if $ENABLE_TRIAGE_CACHE; then
-            THIS_NEEDING_TRIAGE_TIMESTAMP="$(date -d "$(stat $file -c %y)")"
-            if [[ -z "$NEW_OLDEST_NEEDING_TRIAGE_TIMESTAMP" ]]; then
+            THIS_NEEDING_TRIAGE_SECONDS="$(stat "$file" -c %Y)"
+            if [[ -z "$NEW_OLDEST_NEEDING_TRIAGE_SECONDS" ]]; then
                 OLDEST_NEEDING_TRIAGE="$file"
-                NEW_OLDEST_NEEDING_TRIAGE_TIMESTAMP=$THIS_NEEDING_TRIAGE_TIMESTAMP
-                NEW_OLDEST_NEEDING_TRIAGE_SECONDS="`date -d "$NEW_OLDEST_NEEDING_TRIAGE_TIMESTAMP" +%s`"
+                NEW_OLDEST_NEEDING_TRIAGE_SECONDS=$THIS_NEEDING_TRIAGE_SECONDS
             else
-                THIS_NEEDING_TRIAGE_SECONDS="`date -d "$THIS_NEEDING_TRIAGE_TIMESTAMP" +%s`"
-                if [[ $THIS_NEEDING_TRIAGE_SECONDS < $NEW_OLDEST_NEEDING_TRIAGE_SECONDS ]]; then
+                if [[ $THIS_NEEDING_TRIAGE_SECONDS -lt $NEW_OLDEST_NEEDING_TRIAGE_SECONDS ]]; then
                     OLDEST_NEEDING_TRIAGE="$file"
-                    NEW_OLDEST_NEEDING_TRIAGE_TIMESTAMP=$THIS_NEEDING_TRIAGE_TIMESTAMP
-                    NEW_OLDEST_NEEDING_TRIAGE_SECONDS="`date -d "$NEW_OLDEST_NEEDING_TRIAGE_TIMESTAMP" +%s`"
+                    NEW_OLDEST_NEEDING_TRIAGE_SECONDS=$THIS_NEEDING_TRIAGE_SECONDS
                 fi
             fi
         fi
     fi
 done
+if [[ -n "NEW_OLDEST_NEEDING_TRIAGE_SECONDS" ]]; then
+    NEW_OLDEST_NEEDING_TRIAGE_TIMESTAMP="`date "+%a %b %e %T %Z %Y" --date="@$NEW_OLDEST_NEEDING_TRIAGE_SECONDS"`"
+fi
+
 if $ENABLE_TRIAGE_CACHE; then
     echo "$NEW_OLDEST_NEEDING_TRIAGE_TIMESTAMP" > $OLDEST_NEEDING_TRIAGE_FILE
 fi
