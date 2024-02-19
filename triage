@@ -46,6 +46,9 @@ fi
 echo "Checking TODO list"
 ./todo
 
+OLDIFS="$IFS"
+IFS=$'\n'
+
 echo "Getting files"
 if $ENABLE_TRIAGE_CACHE; then
     if [[ ! -f "$OLDEST_NEEDING_TRIAGE_FILE" ]]; then
@@ -68,38 +71,37 @@ if [ -z "$ALL" ]; then
 
     ALL="";
     if [ -d ideas ]; then
-        ALL+="$(echo $'\n'"$(find $PWD/ideas/* -type f $TIME_ARG $TIME_ARG_2 -not -regex ".*\.swp$" -not -regex ".*~$" -not -regex ".*#$" -not -regex ".*\.bak$")")"
+        ALL+="$(echo $'\n'"$(find $PWD/ideas/* -type f $TIME_ARG $TIME_ARG_2 -not -regex ".*\.swp$" -not -regex ".*~$" -not -regex ".*#$" -not -regex ".*\.bak$" -printf '%p:%Ts:' -exec tail -1 '{}' ';' -printf '\n' | grep -vP "(^[^:]*:[^:]*:\[TRIAGE\]\s*$|^$)" | cut -d : -f 1,2)")"
     fi;
     if [ -d notes ]; then
-        ALL+="$(echo $'\n'"$(find $PWD/notes/* -type f $TIME_ARG $TIME_ARG_2 -not -regex ".*\.swp$" -not -regex ".*~$" -not -regex ".*#$" -not -regex ".*\.bak$")")"
+        ALL+="$(echo $'\n'"$(find $PWD/notes/* -type f $TIME_ARG $TIME_ARG_2 -not -regex ".*\.swp$" -not -regex ".*~$" -not -regex ".*#$" -not -regex ".*\.bak$" -printf '%p:%Ts:' -exec tail -1 '{}' ';' -printf '\n' | grep -vP "(^[^:]*:[^:]*:\[TRIAGE\]\s*$|^$)" | cut -d : -f 1,2)")"
     fi;
 fi;
+#echo "$(echo $'\n'"$(find $PWD/{ideas,notes}/* -type f $TIME_ARG $TIME_ARG_2 -not -regex ".*\.swp$" -not -regex ".*~$" -not -regex ".*#$" -not -regex ".*\.bak$" -printf '%p:%Ts:' -exec tail -1 '{}' ';' -printf '\n' | grep -vP "(^[^:]*:[^:]*:\[TRIAGE\]\s*$|^$)" )")"
+
 
 echo "Finding files needing triage"
 NEEDING_TRIAGE=""
-ALL_CHECKED_FILES_COUNT=0
 NEED_TRIAGE_COUNT=0
 for file in $ALL; do
-    ALL_CHECKED_FILES_COUNT=$(($ALL_CHECKED_FILES_COUNT + 1))
-    if [ -z "$(tail -n 1 $file | grep "^\[TRIAGE\]\s*$")" ]; then
-        NEEDING_TRIAGE+=$'\n'"$file"
-        NEED_TRIAGE_COUNT=$(($NEED_TRIAGE_COUNT + 1))
-        if $ENABLE_TRIAGE_CACHE; then
-            THIS_NEEDING_TRIAGE_SECONDS="$(stat "$file" -c %Y)"
-            if [[ -z "$NEW_OLDEST_NEEDING_TRIAGE_SECONDS" ]]; then
-                OLDEST_NEEDING_TRIAGE="$file"
+    THIS_NEEDING_TRIAGE="${file%%:*}"
+    NEEDING_TRIAGE+=$'\n'"$THIS_NEEDING_TRIAGE"
+    NEED_TRIAGE_COUNT=$(($NEED_TRIAGE_COUNT + 1))
+    if $ENABLE_TRIAGE_CACHE; then
+        THIS_NEEDING_TRIAGE_SECONDS="${file##*:}"
+        if [[ -z "$NEW_OLDEST_NEEDING_TRIAGE_SECONDS" ]]; then
+            OLDEST_NEEDING_TRIAGE="$THIS_NEEDING_TRIAGE"
+            NEW_OLDEST_NEEDING_TRIAGE_SECONDS=$THIS_NEEDING_TRIAGE_SECONDS
+        else
+            if [[ $THIS_NEEDING_TRIAGE_SECONDS -lt $NEW_OLDEST_NEEDING_TRIAGE_SECONDS ]]; then
+                OLDEST_NEEDING_TRIAGE="$THIS_NEEDING_TRIAGE"
                 NEW_OLDEST_NEEDING_TRIAGE_SECONDS=$THIS_NEEDING_TRIAGE_SECONDS
-            else
-                if [[ $THIS_NEEDING_TRIAGE_SECONDS -lt $NEW_OLDEST_NEEDING_TRIAGE_SECONDS ]]; then
-                    OLDEST_NEEDING_TRIAGE="$file"
-                    NEW_OLDEST_NEEDING_TRIAGE_SECONDS=$THIS_NEEDING_TRIAGE_SECONDS
-                fi
             fi
         fi
     fi
 done
-if [[ -n "NEW_OLDEST_NEEDING_TRIAGE_SECONDS" ]]; then
-    NEW_OLDEST_NEEDING_TRIAGE_TIMESTAMP="`date "+%a %b %e %T %Z %Y" --date="@$NEW_OLDEST_NEEDING_TRIAGE_SECONDS"`"
+if [[ -n "$OLDEST_NEEDING_TRIAGE" ]]; then
+    NEW_OLDEST_NEEDING_TRIAGE_TIMESTAMP="$(date "+%a %b %e %T %Z %Y" --date="@$(stat "$OLDEST_NEEDING_TRIAGE" -c %Y)")"
 fi
 
 if $ENABLE_TRIAGE_CACHE; then
@@ -107,7 +109,6 @@ if $ENABLE_TRIAGE_CACHE; then
 fi
 
 if [[ $NEED_TRIAGE_COUNT > 0 ]]; then
-    echo "Files checked: $ALL_CHECKED_FILES_COUNT"
     echo "Files needing triage: $NEED_TRIAGE_COUNT";
     if $ENABLE_TRIAGE_CACHE; then
         echo "triage thinks the stalest file needing triage is $OLDEST_NEEDING_TRIAGE"
