@@ -51,7 +51,7 @@ When using `./task TASKNAME` with vim, `:loadview` is invoked to load the existi
 
 Files in `tasks/archived` and `logs/archived` are ignored by `./task` and `./log`, allowing the creation of new tasks/logs with the same names.
 
-`./queue` and `./scratch` each edit a hidden file. Alternatively, use `./queue "QUEUE_MSG" to append to the queue file.
+`./queue` and `./scratch` each edit a hidden file. Alternatively, use `./queue "QUEUE_MSG"` to append to the queue file.
 
 ## Triage and review
 
@@ -86,7 +86,7 @@ Do absolutely nothing for 5 minutes [remind tomorrow 12pm] [remind 2 days 12pm]
 
 Select one or more lines containing new reminders and type `:!./remind parse`. Please note that `./remind` does not handle periodic reminders. All reminders must be converted to an absolute format in order to work correctly.
 
-Reminders can be postponed in-place by appending "10 minutes", "1 hour", "1 day" or similar to the end of the reminder datetime. Alternatively, the [vim-speeddating](https://github.com/tpope/vim-speeddating) plugin lets you increment/decrement absolute reminder times in-place with `Ctrl-a` and `Ctrl-x`.
+Reminders can be postponed ("snoozed") in-place by appending "10 minutes", "1 hour", "1 day" or similar to the end of the reminder datetime. Alternatively, the [vim-speeddating](https://github.com/tpope/vim-speeddating) plugin lets you increment/decrement absolute reminder times in-place with `Ctrl-a` and `Ctrl-x`.
 
 ## Utility commands continued
 
@@ -98,7 +98,7 @@ In vim, select lines of text to be qr-ified and type `:!./qr`.
 
 Alternatively, `./qr "QR_MSG"` will encode the provided `QR_MSG` on the command line.
 
-Some characters do not work well in QR codes, for those, encode the message with base64 first.
+Some characters do not work well in QR codes, for those, encode the message with base64 first. In vim, encode with `:!base64 | ./qr`, and then decode on the other side with `:!base64 -d`.
 
 ### File query
 
